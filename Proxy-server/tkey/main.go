@@ -3,20 +3,30 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
+	"log"
 
 	"github.com/tillitis/tkeyclient"
 	"github.com/tillitis/tkeysign"
 )
 
-const signerPath = "/home/amanch/tkeycthKod/appar/app.bin" //app.bin filen för signer
+const signerPath = "./app.bin" //app.bin filen för signer
 
 func main() {
 
 	fmt.Println("Starting Tillitis Key Client")
 
-	tk := tkeyclient.New()     // gör tkey struct
-	tk.Connect("/dev/ttyACM0") // porten för tkey anslutning
+	port, err := ioutil.ReadFile("config.txt") //configure your port in config.txt
+	if err != nil {
+		log.Fatal("Error reading config file:", err)
+	}
+
+	// Connect to the port
+	tk := tkeyclient.New()
+	tk.Connect(string(port)) // Convert byte slice to string
 	defer tk.Close()
+
+	fmt.Println("Successfully connected to port:", string(port))
 
 	password := []byte("hej123")
 	// ger unika nycklar beroende på password
