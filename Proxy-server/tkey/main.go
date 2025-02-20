@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/tillitis/tkeyclient"
 	"github.com/tillitis/tkeysign"
@@ -16,7 +16,7 @@ func main() {
 
 	fmt.Println("Starting Tillitis Key Client")
 
-	port, err := ioutil.ReadFile("config.txt") //configure your port in config.txt
+	port, err := os.ReadFile("config.txt") //configure your port in config.txt
 	if err != nil {
 		log.Fatal("Error reading config file:", err)
 	}
@@ -28,9 +28,8 @@ func main() {
 
 	fmt.Println("Successfully connected to port:", string(port))
 
-	password := []byte("hej123")
 	// ger unika nycklar beroende på password
-	tk.LoadAppFromFile(signerPath, password) // sätt till nil om inget uss ska användas
+	tk.LoadAppFromFile(signerPath, nil) // sätt till nil om inget uss ska användas
 
 	// skapa signer objekt
 	signer := tkeysign.New(tk)
