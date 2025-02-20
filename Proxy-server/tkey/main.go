@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/tillitis/tkeyclient"
@@ -58,4 +61,24 @@ func portConfig() []byte {
 		log.Fatal("Error reading config file:", err)
 	}
 	return port
+}
+
+// funktionen tar in en url och tkey publik key, []uint8 = lista av 8 bitars unsigned integer
+func sendPubkey(url string, pubkey []uint8) error {
+	// förbered pubkey
+	dataToSend := map[string]string{
+		"public_key": hex.EncodeToString(pubkey),
+	}
+
+	//gör om data till json format kolla med andra gruppen vilket format de använder
+	json_dataToSend, _ := json.Marshal(dataToSend)
+	fmt.Print(json_dataToSend)
+
+	//url där data ska skickas, det som skickas är json-data, newbuffer läser av från json på de som ska skickas
+	send, err := http.Post(url, "application/json", bytes.NewBuffer(json_dataToSend))
+	if err != nil {
+		fmt.Println("pubkey kunde inte skickas", err)
+	}
+	defer send.Body.Close() // send = *http.Response , defer stänger anslutning när vi är klara
+	return nil              //samma som void i java returnar inget
 }
