@@ -1,10 +1,10 @@
 package main
 
 import (
-	"bytes"
-	"encoding/hex"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -17,41 +17,66 @@ const signerPath = "./app.bin" // Configure path for signer
 
 func main() {
 
-	fmt.Println("Starting Tillitis Key Client")
+	//signer := createSigner()
+	http.HandleFunc("/registration", registrationHandler)
+	//http.HandleFunc("/login", loginHandler)
 
-	port := portConfig()
+	fmt.Println("Server running on port 8081")
+	log.Fatal(http.ListenAndServe(":8081", nil))
+	//pubkey, _ := signer.GetPubkey() // Extract public key
 
-	tk := tkeyclient.New()
-	tk.Connect(string(port)) // Convert byte slice to string and connect to port
-	defer tk.Close()
-
-	fmt.Println("Successfully connected to port:", string(port))
-
-	// Generates unique keys based on USS, nil = no USS
-	tk.LoadAppFromFile(signerPath, nil)
-
-	// Create signer object
-	signer := tkeysign.New(tk)
-	pubkey, _ := signer.GetPubkey() // Extract public key
-
-	fmt.Print("offentligNyckel: ")
-	fmt.Print(hex.EncodeToString(pubkey))
+	//fmt.Print("offentligNyckel: ")
+	//fmt.Print(hex.EncodeToString(pubkey))
 
 	// Create mock challenge to sign
-	challenge := []byte("hemligtt")
+	//challenge := []byte("hemligtt")
 
 	// Sign the challenge
+	//signature, _ := signer.Sign(challenge)
+
+	/*
+		fmt.Println("hashad medelande: ")
+		fmt.Println(hex.EncodeToString(signature))
+		fmt.Println("offentligNyckel: ")
+	*/
+	//fmt.Println(hex.EncodeToString(pubkey))
+
+}
+
+func loginHandler() {
+
+}
+
+func registrationHandler(w http.ResponseWriter, r *http.Request) {
+
+	signer := createSigner()
+	//läser in challengen
+	challenge, _ := io.ReadAll(r.Body)
+	defer r.Body.Close()
 	signature, _ := signer.Sign(challenge)
+	fmt.Println("signature")
+	fmt.Print(signature)
+	publicKey, _ := signer.GetPubkey()
+	fmt.Println("publickey")
+	fmt.Print(publicKey)
+	//response := map[string]string{"publicKey": string(re), "signature": string(signature)}
 
-	fmt.Println(" ")
-	fmt.Println(" ")
-	fmt.Println(" ")
-	fmt.Println(" ")
+	// Skapa JSON-respons
+	/*
+		response := map[string]string{
+			"publicKey": hex.EncodeToString(re),
+			"signature": hex.EncodeToString(signature),
+		}
+	*/
+	response := map[string]string{
+		"publicKey": base64.StdEncoding.EncodeToString(publicKey), // Omvandla publicKey (byte-array) till Base64-sträng
+		"signature": base64.StdEncoding.EncodeToString(signature), // Omvandla signature (byte-array) till Base64-sträng
+	}
+	fmt.Print("response")
+	fmt.Print(response)
 
-	fmt.Println("hashad medelande: ")
-	fmt.Println(hex.EncodeToString(signature))
-	fmt.Println("offentligNyckel: ")
-	fmt.Println(hex.EncodeToString(pubkey))
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 
 }
 
@@ -63,6 +88,26 @@ func portConfig() []byte {
 	return port
 }
 
+func createSigner() tkeysign.Signer {
+	fmt.Println("Starting Tillitis Key Client")
+
+	port := portConfig()
+
+	tk := tkeyclient.New()
+
+	tk.Connect(string(port))
+	tk.Close()
+
+	fmt.Println("Successfully connected to port:", string(port))
+	// Load application from file
+	tk.LoadAppFromFile(signerPath, nil)
+
+	// Create and return signer object
+	signer := tkeysign.New(tk)
+	return signer
+}
+
+/*
 // funktionen tar in en url och tkey publik key, []uint8 = lista av 8 bitars unsigned integer
 func sendPubkey(url string, pubkey []uint8) error {
 	// förbered pubkey
@@ -82,3 +127,13 @@ func sendPubkey(url string, pubkey []uint8) error {
 	defer send.Body.Close() // send = *http.Response , defer stänger anslutning när vi är klara
 	return nil              //samma som void i java returnar inget
 }
+*/
+
+/*
+
+main
+	start tkey
+	/login endpoint
+	/register endpoint
+
+*/
