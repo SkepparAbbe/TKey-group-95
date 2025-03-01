@@ -50,6 +50,7 @@ func loginHandler() {
 func registrationHandler(w http.ResponseWriter, r *http.Request) {
 
 	signer := createSigner()
+	defer signer.Close() //problem annars efter första förfrågan defer menas att det alltid körs i slutet av funktionen
 	//läser in challengen
 	challenge, _ := io.ReadAll(r.Body)
 	defer r.Body.Close()
@@ -96,7 +97,7 @@ func createSigner() tkeysign.Signer {
 	tk := tkeyclient.New()
 
 	tk.Connect(string(port))
-	tk.Close()
+	//tk.Close()
 
 	fmt.Println("Successfully connected to port:", string(port))
 	// Load application from file
