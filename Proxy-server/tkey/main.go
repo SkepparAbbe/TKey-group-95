@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/tillitis/tkeyclient"
 	"github.com/tillitis/tkeysign"
@@ -22,15 +21,10 @@ func main() {
 
 	fmt.Println("Server running on port 8081")
 	log.Fatal(http.ListenAndServe(":8081", nil))
-
 }
 
-// Configure your port in config.txt
-func portConfig() []byte {
-	port, err := os.ReadFile("config.txt")
-	if err != nil {
-		log.Fatal("Error reading config file:", err)
-	}
+func portConfig() string {
+	port, _ := tkeyclient.DetectSerialPort(false)
 	return port
 }
 
@@ -41,8 +35,6 @@ func createSignature(signer tkeysign.Signer, r *http.Request) []byte {
 	defer r.Body.Close()
 
 	signature, _ := signer.Sign(challenge)
-
-	fmt.Println("signature:", signature)
 
 	return signature
 }
@@ -63,9 +55,6 @@ func createSigner() tkeysign.Signer {
 
 	// Create and return signer object
 	signer := tkeysign.New(tk)
-
-	// Ensure the signer is always closed when not returned
-	//defer signer.Close()
 
 	return signer
 }
@@ -98,8 +87,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	signature := createSignature(signer, r)
 
 	response := CreateResponse(signature, nil, false)
-	fmt.Print("response")
-	fmt.Print(response)
 
 	setResponse(w, response)
 }
@@ -108,16 +95,13 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 func registrationHandler(w http.ResponseWriter, r *http.Request) {
 
 	signer := createSigner()
+	// Ensure the signer is always closed after being used
 	defer signer.Close()
 	signature := createSignature(signer, r)
 
 	publicKey, _ := signer.GetPubkey()
-	fmt.Println("publickey")
-	fmt.Print(publicKey)
 
 	response := CreateResponse(signature, publicKey, true)
-	fmt.Print("response")
-	fmt.Print(response)
 
 	setResponse(w, response)
 }
