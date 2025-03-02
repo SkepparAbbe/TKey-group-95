@@ -65,7 +65,7 @@ func createSigner() tkeysign.Signer {
 	signer := tkeysign.New(tk)
 
 	// Ensure the signer is always closed when not returned
-	defer signer.Close()
+	//defer signer.Close()
 
 	return signer
 }
@@ -93,6 +93,8 @@ func setResponse(w http.ResponseWriter, response map[string]string) {
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	signer := createSigner()
+	// Ensure the signer is always closed after being used
+	defer signer.Close()
 	signature := createSignature(signer, r)
 
 	response := CreateResponse(signature, nil, false)
@@ -106,6 +108,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 func registrationHandler(w http.ResponseWriter, r *http.Request) {
 
 	signer := createSigner()
+	defer signer.Close()
 	signature := createSignature(signer, r)
 
 	publicKey, _ := signer.GetPubkey()
