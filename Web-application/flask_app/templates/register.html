@@ -18,7 +18,7 @@
                     <input type="text" name="username" id="username">
                     <input type="submit" value="Register">
                 </form>
-                <p class="status-msg">{{msg}}</p>
+                <p class="status-msg {% if success %}status-good{% else %}status-bad{% endif %}">{{msg}}</p>
             </div>
         </div>
     </main>

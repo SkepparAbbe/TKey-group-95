@@ -39,8 +39,15 @@ main {
 
 .status-msg {
     margin: 20px auto;
-    color: #FF0000;
     text-align: center;
+}
+
+.status-good {
+    color: #00FF00;
+}
+
+.status-bad {
+    color: #FF0000;
 }
 
 form {
