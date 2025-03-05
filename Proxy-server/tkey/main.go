@@ -15,6 +15,7 @@ import (
 const signerPath = "./app.bin" // Configure path for signer
 
 func main() {
+	tkeyclient.SilenceLogging()
 
 	http.HandleFunc("/registration", registrationHandler)
 	http.HandleFunc("/login", loginHandler)
@@ -23,27 +24,33 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8081", nil))
 }
 
-func portConfig() string {
-	port, _ := tkeyclient.DetectSerialPort(false)
-	return port
+func portConfig() (string, error) {
+	port, err := tkeyclient.DetectSerialPort(false)
+
+	if err != nil {
+		log.Fatalf("tkey device is not connected: %v", err)
+		return "", err
+	}
+
+	return port, nil
 }
 
-func createSignature(signer tkeysign.Signer, r *http.Request) []byte {
+func createSignature(signer tkeysign.Signer, r *http.Request) ([]byte, error) {
 
 	// Read the challenge from the request body
-	challenge, _ := io.ReadAll(r.Body)
+	challenge, err := io.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println("Error reading body:", err)
+	}
 	defer r.Body.Close()
 
 	signature, _ := signer.Sign(challenge)
 
-	return signature
+	return signature, nil
 }
 
 func createSigner() tkeysign.Signer {
-
-	fmt.Println("Starting Tillitis Key Client")
-
-	port := portConfig()
+	port, _ := portConfig()
 
 	tk := tkeyclient.New()
 
@@ -75,7 +82,9 @@ func CreateResponse(signature []byte, publicKey []byte, includePublicKey bool) m
 // Sets the response map to the endpoint
 func setResponse(w http.ResponseWriter, response map[string]string) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("Could't send response: %v", err)
+	}
 }
 
 // Function to handle /login endpoint
@@ -84,11 +93,17 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	signer := createSigner()
 	// Ensure the signer is always closed after being used
 	defer signer.Close()
-	signature := createSignature(signer, r)
+
+	signature, err := createSignature(signer, r)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusBadRequest)
+		return
+	}
 
 	response := CreateResponse(signature, nil, false)
-
 	setResponse(w, response)
+	log.Println("Signed challenge sent successfully")
+
 }
 
 // Function to handle /registration endpoint
@@ -97,11 +112,17 @@ func registrationHandler(w http.ResponseWriter, r *http.Request) {
 	signer := createSigner()
 	// Ensure the signer is always closed after being used
 	defer signer.Close()
-	signature := createSignature(signer, r)
+	signature, err := createSignature(signer, r)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusBadRequest)
+		return
+	}
 
 	publicKey, _ := signer.GetPubkey()
 
 	response := CreateResponse(signature, publicKey, true)
 
 	setResponse(w, response)
+	log.Println("Public key sent successfully")
 }
