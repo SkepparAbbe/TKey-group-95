@@ -15,7 +15,7 @@ import (
 const signerPath = "./app.bin" // Configure path for signer
 
 func main() {
-	tkeyclient.SilenceLogging()
+	tkeyclient.SilenceLogging() // Removes unnecessary prints in terminal
 
 	http.HandleFunc("/registration", registrationHandler)
 	http.HandleFunc("/login", loginHandler)
@@ -28,10 +28,8 @@ func portConfig() (string, error) {
 	port, err := tkeyclient.DetectSerialPort(false)
 
 	if err != nil {
-		log.Fatalf("tkey device is not connected: %v", err)
-		return "", err
+		return "", fmt.Errorf("tkey device is not connected: %v", err)
 	}
-
 	return port, nil
 }
 
@@ -49,11 +47,12 @@ func createSignature(signer tkeysign.Signer, r *http.Request) ([]byte, error) {
 	return signature, nil
 }
 
-func createSigner() tkeysign.Signer {
-	port, _ := portConfig()
-
+func createSigner() (tkeysign.Signer, error) {
+	port, err := portConfig()
 	tk := tkeyclient.New()
-
+	if err != nil {
+		return tkeysign.Signer{}, err
+	}
 	tk.Connect(string(port))
 	fmt.Println("Successfully connected to port:", string(port))
 
@@ -63,7 +62,7 @@ func createSigner() tkeysign.Signer {
 	// Create and return signer object
 	signer := tkeysign.New(tk)
 
-	return signer
+	return signer, nil
 }
 
 // CreateResponse generates a response map with optional publicKey.
@@ -90,7 +89,12 @@ func setResponse(w http.ResponseWriter, response map[string]string) {
 // Function to handle /login endpoint
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 
-	signer := createSigner()
+	signer, err := createSigner()
+	if err != nil {
+		http.Error(w, "No TKey device found", http.StatusBadRequest)
+		log.Printf("Error creating signer: %v", err)
+		return
+	}
 	// Ensure the signer is always closed after being used
 	defer signer.Close()
 
@@ -109,7 +113,12 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 // Function to handle /registration endpoint
 func registrationHandler(w http.ResponseWriter, r *http.Request) {
 
-	signer := createSigner()
+	signer, err := createSigner()
+	if err != nil {
+		http.Error(w, "No TKey device found", http.StatusBadRequest)
+		log.Printf("Error creating signer: %v", err)
+		return
+	}
 	// Ensure the signer is always closed after being used
 	defer signer.Close()
 	signature, err := createSignature(signer, r)
