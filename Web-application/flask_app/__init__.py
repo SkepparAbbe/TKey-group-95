@@ -38,8 +38,18 @@ def create_app(test_config=None):
         challenge = f"{unique_id}-{timestamp}"
         return challenge
     
-    def validate(signature):
+    def validate(signature: str):
         return True
+    
+    def fetch_public_key():
+        response = requests.post("http://localhost:8081/registration", data="")
+        go_response = response.json()
+        return go_response['publicKey']
+
+    def send_challenge(challenge: str):
+        response = requests.post("http://localhost:8081/login", data=challenge)
+        go_response = response.json()
+        return go_response
 
     # a simple page that says hello
     @app.route('/hello')
@@ -62,12 +72,12 @@ def create_app(test_config=None):
             data = db.get_db()
             user = data.execute("SELECT * FROM user WHERE user=?", (username,)).fetchone()
             if not user:
-                # fetch the public key from the Tkey
-                pubKey = "Key"
+                pubKey = fetch_public_key()
                 challenge = generate_challenge()
                 # Send the challenge to the proxy server
-                # Await the response, Validate the signature
-                if validate("Signature Placeholder"):
+                response = send_challenge(challenge)
+                if validate(response['signature']):
+                    print(f"{user} successfully logged in!")
                     # add user (username + public key pair) to database
                     data.execute("""
                                  INSERT INTO user (username, publicKey)
