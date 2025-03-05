@@ -6,7 +6,7 @@ import hashlib
 from .verify import verify
 
 from flask import Flask
-from flask import render_template, redirect, url_for, request
+from flask import render_template, redirect, url_for, request, session
 
 def create_app(test_config=None):
     # Create and configure the app
@@ -64,7 +64,27 @@ def create_app(test_config=None):
     
     @app.route('/login', methods = ['GET', 'POST'])
     def login():
-        return "In progress"
+        msg = ''
+        if (request.method == 'POST' and 'username' in request.form):
+            username = request.form['username']
+            data = db.get_db()
+            user = data.execute("SELECT * FROM user WHERE username=?", (username,)).fetchone()
+            if user:
+                public_key = user['publicKey']
+                challenge = generate_challenge()
+                response = send_challenge(challenge)
+                if validate(challenge, response['signature'], public_key):
+                    # authenticate & add user to session
+                    # redirect(url_for('home'))
+                    # TODO Swap this for the things above
+                    msg = 'Successfully logged in!'
+                else:
+                    msg = 'Signature couldn\'t be validated'
+                pass
+            else:
+                msg = 'Invalid credentials'
+            data.close()
+        return render_template('login.html', msg=msg, success=False)
 
     @app.route('/register', methods = ['GET', 'POST'])
     def register():
@@ -77,7 +97,6 @@ def create_app(test_config=None):
             if not user:
                 response, challenge = register_key()
                 if validate(challenge, response['signature'], response['publicKey']):
-                    # add user (username + public key pair) to database
                     data.execute("""
                                  INSERT INTO user (username, publicKey)
                                  VALUES (?, ?)""", (username, response['publicKey']))
