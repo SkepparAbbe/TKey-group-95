@@ -1,13 +1,12 @@
 package main
 
 import (
-	"bytes"
-	"encoding/hex"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/tillitis/tkeyclient"
 	"github.com/tillitis/tkeysign"
@@ -16,69 +15,123 @@ import (
 const signerPath = "./app.bin" // Configure path for signer
 
 func main() {
+	tkeyclient.SilenceLogging() // Removes unnecessary prints in terminal
 
-	fmt.Println("Starting Tillitis Key Client")
+	http.HandleFunc("/registration", registrationHandler)
+	http.HandleFunc("/login", loginHandler)
 
-	port := portConfig()
+	fmt.Println("Server running on port 8081")
+	log.Fatal(http.ListenAndServe(":8081", nil))
+}
 
-	tk := tkeyclient.New()
-	tk.Connect(string(port)) // Convert byte slice to string and connect to port
-	defer tk.Close()
+func portConfig() (string, error) {
+	port, err := tkeyclient.DetectSerialPort(false)
 
-	fmt.Println("Successfully connected to port:", string(port))
+	if err != nil {
+		return "", fmt.Errorf("tkey device is not connected: %v", err)
+	}
+	return port, nil
+}
 
-	// Generates unique keys based on USS, nil = no USS
-	tk.LoadAppFromFile(signerPath, nil)
+func createSignature(signer tkeysign.Signer, r *http.Request) ([]byte, error) {
 
-	// Create signer object
-	signer := tkeysign.New(tk)
-	pubkey, _ := signer.GetPubkey() // Extract public key
+	// Read the challenge from the request body
+	challenge, err := io.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println("Error reading body:", err)
+	}
+	defer r.Body.Close()
 
-	fmt.Print("offentligNyckel: ")
-	fmt.Print(hex.EncodeToString(pubkey))
-
-	// Create mock challenge to sign
-	challenge := []byte("hemligtt")
-
-	// Sign the challenge
 	signature, _ := signer.Sign(challenge)
 
-	fmt.Println(" ")
-	fmt.Println(" ")
-	fmt.Println(" ")
-	fmt.Println(" ")
+	return signature, nil
+}
 
-	fmt.Println("hashad medelande: ")
-	fmt.Println(hex.EncodeToString(signature))
-	fmt.Println("offentligNyckel: ")
-	fmt.Println(hex.EncodeToString(pubkey))
+func createSigner() (tkeysign.Signer, error) {
+	port, err := portConfig()
+	tk := tkeyclient.New()
+	if err != nil {
+		return tkeysign.Signer{}, err
+	}
+	tk.Connect(string(port))
+	fmt.Println("Successfully connected to port:", string(port))
+
+	// Load application from file
+	tk.LoadAppFromFile(signerPath, nil)
+
+	// Create and return signer object
+	signer := tkeysign.New(tk)
+
+	return signer, nil
+}
+
+// CreateResponse generates a response map with optional publicKey.
+func CreateResponse(signature []byte, publicKey []byte, includePublicKey bool) map[string]string {
+	response := map[string]string{
+		"signature": base64.StdEncoding.EncodeToString(signature),
+	}
+
+	if includePublicKey {
+		response["publicKey"] = base64.StdEncoding.EncodeToString(publicKey)
+	}
+
+	return response
+}
+
+// Sets the response map to the endpoint
+func setResponse(w http.ResponseWriter, response map[string]string) {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("Could't send response: %v", err)
+	}
+}
+
+// Function to handle /login endpoint
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+
+	signer, err := createSigner()
+	if err != nil {
+		http.Error(w, "No TKey device found", http.StatusBadRequest)
+		log.Printf("Error creating signer: %v", err)
+		return
+	}
+	// Ensure the signer is always closed after being used
+	defer signer.Close()
+
+	signature, err := createSignature(signer, r)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	response := CreateResponse(signature, nil, false)
+	setResponse(w, response)
+	log.Println("Signed challenge sent successfully")
 
 }
 
-func portConfig() []byte {
-	port, err := os.ReadFile("config.txt") // Configure your port in config.txt
+// Function to handle /registration endpoint
+func registrationHandler(w http.ResponseWriter, r *http.Request) {
+
+	signer, err := createSigner()
 	if err != nil {
-		log.Fatal("Error reading config file:", err)
+		http.Error(w, "No TKey device found", http.StatusBadRequest)
+		log.Printf("Error creating signer: %v", err)
+		return
 	}
-	return port
-}
+	// Ensure the signer is always closed after being used
+	defer signer.Close()
+	signature, err := createSignature(signer, r)
 
-// funktionen tar in en url och tkey publik key, []uint8 = lista av 8 bitars unsigned integer
-func sendPubkey(url string, pubkey []uint8) error {
-	// förbered pubkey
-	dataToSend := map[string]string{
-		"public_key": hex.EncodeToString(pubkey),
-	}
-
-	//gör om data till json format kolla med andra gruppen vilket format de använder
-	json_dataToSend, _ := json.Marshal(dataToSend)
-	fmt.Print(json_dataToSend)
-
-	//url där data ska skickas, det som skickas är json-data, newbuffer läser av från json på de som ska skickas
-	send, err := http.Post(url, "application/json", bytes.NewBuffer(json_dataToSend))
 	if err != nil {
-		fmt.Println("pubkey kunde inte skickas", err)
+		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusBadRequest)
+		return
 	}
-	defer send.Body.Close() // send = *http.Response , defer stänger anslutning när vi är klara
-	return nil              //samma som void i java returnar inget
+
+	publicKey, _ := signer.GetPubkey()
+
+	response := CreateResponse(signature, publicKey, true)
+
+	setResponse(w, response)
+	log.Println("Public key sent successfully")
 }
