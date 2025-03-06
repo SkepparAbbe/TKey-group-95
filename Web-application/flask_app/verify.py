@@ -5,8 +5,8 @@ from cryptography.hazmat.primitives import serialization
 import cryptography.hazmat.primitives.asymmetric.ed25519 as ed25519
 from cryptography.hazmat.primitives.hashes import Hash
 from cryptography.exceptions import InvalidSignature
-import pytest
 import argparse
+import base64
 from dotenv import load_dotenv
 import os
 
@@ -21,24 +21,27 @@ the_pub_key = os.getenv("PUBLIC_KEY")
 
 
 def get_pub_key_bytes(key):
-    pub_key_bytes = bytes.fromhex(key)
+    pub_key_bytes = base64.b64decode(key)
     return ed25519.Ed25519PublicKey.from_public_bytes(pub_key_bytes)
     
 
 def get_signature_bytes(signature):
-    return bytes.fromhex(signature)
+    return base64.b64decode(signature)
     
 
-def get_message_bytes(message):
-    return message.encode('utf-8')
+def get_challenge_bytes(challenge):
+    return challenge.encode()
 
 
-
-def verify(message, signature, key):
+def verify(challenge, signature, key):
     signature_bytes = get_signature_bytes(signature)
-    pub_key_bytes = get_pub_key_bytes(key)
-    message = get_message_bytes(message)
-    pub_key_bytes.verify(signature_bytes, message)
+    pub_key = get_pub_key_bytes(key)
+    challenge_bytes = get_challenge_bytes(challenge)
+    try:
+        pub_key.verify(signature_bytes, challenge_bytes)
+        return True
+    except InvalidSignature:
+        return False
 
 def main():
     parser = argparse.ArgumentParser(description="Run the verify function, to test --test")
