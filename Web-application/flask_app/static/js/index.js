@@ -23,7 +23,10 @@ async function authenticate(event) {
 
     const signatureResponse = await fetch("http://localhost:8081/login", {
         method: "POST",
-        body: JSON.stringify(challenge.challenge)
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: challenge.challenge
     });
     const pSignature = await signatureResponse.json();
     const responseDict = {
@@ -38,7 +41,14 @@ async function authenticate(event) {
         },
         body: JSON.stringify(responseDict)
     });
-    //TODO do something
+    
+    const responseData = await verifyResponse.json();
+
+    if (verifyResponse.ok && responseData.success) {
+        window.location.href = responseData.redirect_url;
+    } else {
+        console.error('Error:', responseData.error);
+    }
 }
 
 async function register(event) {
@@ -68,7 +78,10 @@ async function register(event) {
 
     const signatureResponse = await fetch("http://localhost:8081/registration", {
         method: "POST",
-        body: JSON.stringify(challenge.challenge)
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: challenge.challenge
     });
     const pSignature = await signatureResponse.json();
     const responseDict = {
@@ -84,5 +97,12 @@ async function register(event) {
         },
         body: JSON.stringify(responseDict)
     });
-    //TODO do something
+    
+    const responseData = await verifyResponse.json();
+
+    if (verifyResponse.ok && responseData.success) {
+        window.location.href = responseData.redirect_url;
+    } else {
+        console.error('Error:', responseData.error);
+    }
 }
