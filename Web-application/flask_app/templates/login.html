@@ -13,7 +13,7 @@
     <main>
         <div class="form-container">
             <div class="inner-container">
-                <form action="" method="post">
+                <form id="login-form" onsubmit="authenticate(event)">
                     <label for="username">Username</label>
                     <input type="text" name="username" id="username">
                     <input type="submit" value="Login">
@@ -22,6 +22,7 @@
             </div>
         </div>
     </main>
+    <script src="{{url_for('static', filename='js/index.js')}}"></script>
 </body>
 
 </html>
