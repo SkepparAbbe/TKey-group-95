@@ -5,8 +5,10 @@ import time
 import hashlib
 from .verify import verify
 
+from .auth import load_logged_in_user, login_required, bp
+
 from flask import Flask
-from flask import render_template, redirect, url_for, request, session, jsonify
+from flask import g, render_template, redirect, url_for, request, session, jsonify
 
 def create_app(test_config=None):
     # Create and configure the app
@@ -34,6 +36,9 @@ def create_app(test_config=None):
 
     from . import database
     database.init_app(app)
+
+    from . import auth
+    app.register_blueprint(auth.bp)
 
     def generate_challenge():
         unique_id = uuid.uuid4().hex
@@ -93,6 +98,8 @@ def create_app(test_config=None):
             return jsonify({'error': 'invalid credentials'}), 401
         if not validate(challenge, signature, user['publicKey']):
             return jsonify({'error': 'invalid credentials'}), 401
+        session.clear()
+        session['user_id'] = user['id']
         return jsonify({
             'success': 'Successfully logged in',
             'redirect_url': url_for('home')  # Or any other page you want to redirect to
@@ -121,7 +128,7 @@ def create_app(test_config=None):
         }), 200
 
 
-    @app.route('/login', methods = ['GET', 'POST'])
+    @app.route('/login', methods = ['GET'])
     def login():
         return render_template('login.html')
     
@@ -130,10 +137,16 @@ def create_app(test_config=None):
     def register1():
         return render_template('register.html')
 
+    @app.route('/logout')
+    def logout():
+        session.clear()
+        return redirect(url_for('login'))
+
     @app.route('/home')
+    @login_required
     def home():
         # fetch the logged in user
-        user = "User"
+        user = g.user
         return render_template('home.html', user=user)
 
     return app
