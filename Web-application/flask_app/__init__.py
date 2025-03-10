@@ -5,8 +5,10 @@ import time
 import hashlib
 from .verify import verify
 
+from .auth import load_logged_in_user, login_required, bp
+
 from flask import Flask
-from flask import render_template, redirect, url_for, request, session
+from flask import g, render_template, redirect, url_for, request, session
 
 def create_app(test_config=None):
     # Create and configure the app
@@ -32,6 +34,9 @@ def create_app(test_config=None):
 
     from . import db
     db.init_app(app)
+
+    from . import auth
+    app.register_blueprint(auth.bp)
 
     def generate_challenge():
         unique_id = uuid.uuid4().hex
@@ -77,7 +82,10 @@ def create_app(test_config=None):
                     # authenticate & add user to session
                     # redirect(url_for('home'))
                     # TODO Swap this for the things above
-                    msg = 'Successfully logged in!'
+                    session.clear()
+                    session['user_id'] = user['id']
+                    #session['username'] = user['username']
+                    return redirect(url_for('home'))
                 else:
                     msg = 'Signature couldn\'t be validated'
                 pass
@@ -109,11 +117,17 @@ def create_app(test_config=None):
                 msg = 'A user with that name already exists'
             data.close()
         return render_template('register.html', msg=msg, success=success)
+    
+    @app.route('/logout')
+    def logout():
+        session.clear()
+        return redirect(url_for('login'))
 
     @app.route('/home')
+    @login_required
     def home():
         # fetch the logged in user
-        user = "Placeholder"
-        return render_template('index.html', user=user)
+        user = g.user
+        return render_template('home.html', user=user)
 
     return app
