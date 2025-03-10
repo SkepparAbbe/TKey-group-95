@@ -96,3 +96,11 @@ a {
 .r-link {
     background-color: #FF4040;
 }
+
+#back-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color: #000000;
+    background-color: #AAAAAA;
+}
