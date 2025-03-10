@@ -28,6 +28,13 @@ async function authenticate(event) {
         },
         body: challenge.challenge
     });
+    if (!signatureResponse.ok)
+    {
+        const statusMsg = document.querySelector(".status-msg");
+        statusMsg.innerHTML = String("Error communicating with the Tkey");
+        console.error('Error:', 'Error communicating with the Tkey');
+        return;
+    }
     const pSignature = await signatureResponse.json();
     const responseDict = {
         "session_id": challenge.session_id,
@@ -47,6 +54,8 @@ async function authenticate(event) {
     if (verifyResponse.ok && responseData.success) {
         window.location.href = responseData.redirect_url;
     } else {
+        const statusMsg = document.querySelector(".status-msg");
+        statusMsg.innerHTML = String(responseData.error);
         console.error('Error:', responseData.error);
     }
 }
@@ -83,6 +92,13 @@ async function register(event) {
         },
         body: challenge.challenge
     });
+    if (!signatureResponse.ok)
+        {
+            const statusMsg = document.querySelector(".status-msg");
+            statusMsg.innerHTML = String("Error communicating with the Tkey");
+            console.error('Error:', 'Error communicating with the Tkey');
+            return;
+        }
     const pSignature = await signatureResponse.json();
     const responseDict = {
         "session_id": challenge.session_id,
@@ -103,6 +119,8 @@ async function register(event) {
     if (verifyResponse.ok && responseData.success) {
         window.location.href = responseData.redirect_url;
     } else {
+        const statusMsg = document.querySelector(".status-msg");
+        statusMsg.innerHTML = String(responseData.error);
         console.error('Error:', responseData.error);
     }
 }

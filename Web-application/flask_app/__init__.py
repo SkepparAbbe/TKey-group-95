@@ -62,7 +62,7 @@ def create_app(test_config=None):
 
     @app.route('/')
     def index():
-        return redirect(url_for('login'))
+        return render_template('index.html')
     
     @app.route('/challenge', methods=['POST'])
     def send_challenge():
@@ -89,6 +89,8 @@ def create_app(test_config=None):
         db = database.get_db()
         user = db.execute('SELECT * FROM user WHERE username=?', (username,)).fetchone()
         db.close()
+        if not user:
+            return jsonify({'error': 'invalid credentials'}), 401
         if not validate(challenge, signature, user['publicKey']):
             return jsonify({'error': 'invalid credentials'}), 401
         return jsonify({
@@ -115,26 +117,23 @@ def create_app(test_config=None):
             db.commit()
         return jsonify({
             'success': 'Successfully registered user',
-            'redirect_url': url_for('home')  # Or any other page you want to redirect to
+            'redirect_url': url_for('login')  # Or any other page you want to redirect to
         }), 200
 
 
     @app.route('/login', methods = ['GET', 'POST'])
     def login():
-        msg = ''
-        return render_template('login.html', msg=msg, success=False)
+        return render_template('login.html')
     
 
     @app.route('/register', methods = ['GET'])
     def register1():
-        msg = ''
-        success = False
-        return render_template('register.html', msg=msg, success=success)
+        return render_template('register.html')
 
     @app.route('/home')
     def home():
         # fetch the logged in user
-        user = "Placeholder"
-        return render_template('index.html', user=user)
+        user = "User"
+        return render_template('home.html', user=user)
 
     return app

@@ -13,12 +13,13 @@
     <main>
         <div class="form-container">
             <div class="inner-container">
+                <h2>Login</h2>
                 <form id="login-form" onsubmit="authenticate(event)">
                     <label for="username">Username</label>
                     <input type="text" name="username" id="username">
                     <input type="submit" value="Login">
                 </form>
-                <p class="status-msg {% if success %}status-good{% else %}status-bad{% endif %}">{{msg}}</p>
+                <p class="status-msg"></p>
             </div>
         </div>
     </main>

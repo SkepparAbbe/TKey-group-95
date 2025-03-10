@@ -13,12 +13,13 @@
     <main>
         <div class="form-container">
             <div class="inner-container">
+                <h2>Register</h2>
                 <form id="registration-form" onsubmit="register(event)"">
-                    <label for="username">Username</label>
+                    <label for=" username">Username</label>
                     <input type="text" name="username" id="username">
                     <input type="submit" value="Register">
                 </form>
-                <p class="status-msg {% if success %}status-good{% else %}status-bad{% endif %}">{{msg}}</p>
+                <p class="status-msg"></p>
             </div>
         </div>
     </main>
