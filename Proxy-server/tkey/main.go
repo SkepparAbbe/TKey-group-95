@@ -33,6 +33,17 @@ func portConfig() (string, error) {
 	return port, nil
 }
 
+func enableCORS(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5000")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+}
+
 func createSignature(signer tkeysign.Signer, r *http.Request) ([]byte, error) {
 
 	// Read the challenge from the request body
@@ -88,7 +99,7 @@ func setResponse(w http.ResponseWriter, response map[string]string) {
 
 // Function to handle /login endpoint
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-
+	enableCORS(w, r)
 	signer, err := createSigner()
 	if err != nil {
 		http.Error(w, "No TKey device found", http.StatusBadRequest)
@@ -112,7 +123,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 // Function to handle /registration endpoint
 func registrationHandler(w http.ResponseWriter, r *http.Request) {
-
+	enableCORS(w, r)
 	signer, err := createSigner()
 	if err != nil {
 		http.Error(w, "No TKey device found", http.StatusBadRequest)
