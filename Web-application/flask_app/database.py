@@ -6,9 +6,33 @@ import click
 # It is used to store data that might be accessed by mulitple functions during the request
 # The connection is stored and reused instead of creating a new connection each time.
 from flask import current_app, g
+import psycopg2
+import os
+from urllib.parse import urlparse
+
+DATABASE_URL = os.getenv("SUPABASE_DATABASE_URL")
+
+result = urlparse(DATABASE_URL)
+
+username = result.username
+password = result.password
+database = result.path[1:]
+hostname = result.hostname
+port = result.port
 
 
+def get_db_connection():
+    conn = psycopg2.connect(
+        dbname = database,
+        user = username,
+        password = password,
+        host = hostname,
+        port = port,
+        sslmode="require")
+    return conn
 
+
+# Deprecated, migrating to postgresql hosted on Supabase
 def get_db():
     """Uses the current_app since this is run when the application factory has done its magic.\n
        Gets the DATABASE variable descibing where the database is located. \n

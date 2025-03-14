@@ -1,5 +1,7 @@
 async function authenticate(event) {
     event.preventDefault();
+    const current_url = window.location.origin
+    console.log(current_url)
 
     const formData = new FormData(document.getElementById("login-form"));
     const contents = {};
@@ -7,7 +9,7 @@ async function authenticate(event) {
         contents[key] = value;
     });
 
-    const challengeResponse = await fetch("http://localhost:5000/challenge", {
+    const challengeResponse = await fetch(current_url + "/challenge", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -41,7 +43,7 @@ async function authenticate(event) {
         "signature": pSignature.signature
     };
 
-    const verifyResponse = await fetch("http://localhost:5000/verify", {
+    const verifyResponse = await fetch(current_url + "/verify", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -61,6 +63,8 @@ async function authenticate(event) {
 }
 
 async function register(event) {
+    const current_url = window.location.origin
+    console.log(current_url)
     event.preventDefault();
 
     const formData = new FormData(document.getElementById("registration-form"));
@@ -69,7 +73,7 @@ async function register(event) {
         contents[key] = value;
     });
 
-    const challengeResponse = await fetch("http://localhost:5000/challenge", {
+    const challengeResponse = await fetch(current_url + "/challenge", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -106,7 +110,7 @@ async function register(event) {
         "publicKey": pSignature.publicKey
     };
 
-    const verifyResponse = await fetch("http://localhost:5000/register", {
+    const verifyResponse = await fetch(current_url + "/register", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
