@@ -1,126 +1,104 @@
-async function authenticate(event) {
+const ContentType = {
+    URLENCODED: "application/x-www-form-urlencoded",
+    JSON: "application/json"
+};
+
+const statusMsg = document.querySelector(".status-msg");
+
+async function HandleAuthentication(event, formID, responseGenerator, signatureURL, responseURL) {
     event.preventDefault();
 
-    const formData = new FormData(document.getElementById("login-form"));
+    const formData = new FormData(document.getElementById(formID));
     const contents = {};
     formData.forEach((value, key) => {
         contents[key] = value;
     });
 
-    const challengeResponse = await fetch("http://localhost:5000/challenge", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(contents)
-    });
+    const challenge = await requestData(
+        contents,
+        "http://localhost:5000/challenge",
+        ContentType.JSON
+    );
 
-    if (!challengeResponse.ok) {
-        console.log("Error");
+    if (!challenge.ok) {
+        statusMsg.innerHTML = String("Error communicating with the Server");
         return;
     }
-    const challenge = await challengeResponse.json();
 
-    const signatureResponse = await fetch("http://localhost:8081/login", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: challenge.challenge
-    });
-    if (!signatureResponse.ok)
-    {
-        const statusMsg = document.querySelector(".status-msg");
-        statusMsg.innerHTML = String("Error communicating with the Tkey");
-        console.error('Error:', 'Error communicating with the Tkey');
+    const signature = await requestData(
+        challenge.data.challenge,
+        signatureURL,
+        ContentType.URLENCODED
+    );
+
+    if (!signature.ok) {
+        statusMsg.innerHTML = signature.data.error;
         return;
     }
-    const pSignature = await signatureResponse.json();
-    const responseDict = {
-        "session_id": challenge.session_id,
-        "signature": pSignature.signature
-    };
 
-    const verifyResponse = await fetch("http://localhost:5000/verify", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(responseDict)
-    });
-    
-    const responseData = await verifyResponse.json();
+    const responseDict = responseGenerator(challenge.data, signature.data);
 
-    if (verifyResponse.ok && responseData.success) {
-        window.location.href = responseData.redirect_url;
+    const response = await requestData(
+        responseDict, 
+        responseURL, 
+        ContentType.JSON
+    );
+
+    if (response.ok && response.data.success) {
+        window.location.href = response.data.redirect_url;
     } else {
-        const statusMsg = document.querySelector(".status-msg");
-        statusMsg.innerHTML = String(responseData.error);
-        console.error('Error:', responseData.error);
+        statusMsg.innerHTML = String(response.data.error);
     }
 }
 
+async function authenticate(event) {
+    HandleAuthentication(
+        event,
+        "login-form",
+        authResponseBuilder,
+        "http://localhost:8081/login",
+        "http://localhost:5000/verify"
+    );
+}
+
 async function register(event) {
-    event.preventDefault();
+    HandleAuthentication(
+        event,
+        "registration-form",
+        registerResponseBuilder,
+        "http://localhost:8081/registration",
+        "http://localhost:5000/register"
+    );
+}
 
-    const formData = new FormData(document.getElementById("registration-form"));
-    const contents = {};
-    formData.forEach((value, key) => {
-        contents[key] = value;
-    });
-
-    const challengeResponse = await fetch("http://localhost:5000/challenge", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(contents)
-    });
-
-    if (!challengeResponse.ok) {
-        console.log("error");
-        return;
-    }
-
-    const challenge = await challengeResponse.json();
-    console.log(challenge.challenge);
-
-    const signatureResponse = await fetch("http://localhost:8081/registration", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: challenge.challenge
-    });
-    if (!signatureResponse.ok)
-        {
-            const statusMsg = document.querySelector(".status-msg");
-            statusMsg.innerHTML = String("Error communicating with the Tkey");
-            console.error('Error:', 'Error communicating with the Tkey');
-            return;
-        }
-    const pSignature = await signatureResponse.json();
-    const responseDict = {
-        "session_id": challenge.session_id,
-        "signature": pSignature.signature,
-        "publicKey": pSignature.publicKey
+function authResponseBuilder(challengeData, signatureData) {
+    return {
+        session_id: challengeData.session_id,
+        signature: signatureData.signature
     };
+}
 
-    const verifyResponse = await fetch("http://localhost:5000/register", {
+function registerResponseBuilder(challengeData, signatureData) {
+    return {
+        session_id: challengeData.session_id,
+        signature: signatureData.signature,
+        publicKey: signatureData.publicKey
+    };
+}
+
+async function requestData(message, url, contentType) {
+    const response = await fetch(url, {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": contentType
         },
-        body: JSON.stringify(responseDict)
+        body: contentType == ContentType.JSON ? JSON.stringify(message) : message
     });
-    
-    const responseData = await verifyResponse.json();
-
-    if (verifyResponse.ok && responseData.success) {
-        window.location.href = responseData.redirect_url;
-    } else {
-        const statusMsg = document.querySelector(".status-msg");
-        statusMsg.innerHTML = String(responseData.error);
-        console.error('Error:', responseData.error);
+    try {
+        const data = await response.json();
+        return { ok: response.ok, data: data };
+    } catch (e) {
+        // Assume error in proxy server
+        return { ok: false, data: { error: "Error communicating with the Tkey" } };
     }
 }
