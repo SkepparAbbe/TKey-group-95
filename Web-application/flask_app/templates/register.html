@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}">
+</head>
+
+<body>
+    <main>
+        <a id="back-button" href="{{ url_for('index') }}">Back</a>
+        <div class="form-container">
+            <div class="inner-container">
+                <h2>Register</h2>
+                <form id="registration-form" onsubmit="register(event)"">
+                    <label for=" username">Username</label>
+                    <input type="text" name="username" id="username">
+                    <input type="submit" value="Register">
+                </form>
+                <p class="status-msg"></p>
+            </div>
+        </div>
+    </main>
+    <script src="{{url_for('static', filename='js/index.js')}}"></script>
+</body>
+
+</html>
