@@ -111,6 +111,7 @@ def create_app(test_config=None):
         cursor.execute('SELECT * FROM "user" WHERE username=%s', (username,))
         user = cursor.fetchone()
         if not user:
+            db.close()
             return jsonify({'error': 'invalid credentials'}), 401
         db.close()
         if not validate(challenge, signature, user['publickey']):
@@ -141,6 +142,7 @@ def create_app(test_config=None):
                          INSERT INTO "user" (username, publicKey)
                          VALUES (%s, %s)""", (username, public_key))
             conn.commit()
+            conn.close()
         return jsonify({
             'success': 'Successfully registered user',
             'redirect_url': url_for('login')  # Or any other page you want to redirect to
