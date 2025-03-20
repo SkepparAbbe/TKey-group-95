@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  flask-app:
+    build: .
+    container_name: flask-app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/db
+    depends_on:
+      - postgres
+    volumes:
+      - .:/flask_app  # Hot reload for code changes
+
+  postgres:
+    image: postgres:latest
+    container_name: database
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Persist data between container restarts
+    ports:
+      - "5434:5432"  # Expose PostgreSQL to your local machine
+
+volumes:
+  postgres_data:

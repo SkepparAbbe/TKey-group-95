@@ -10,25 +10,10 @@ import psycopg2
 import os
 from urllib.parse import urlparse
 
-DATABASE_URL = os.getenv("SUPABASE_DATABASE_URL")
-
-result = urlparse(DATABASE_URL)
-
-username = result.username
-password = result.password
-database = result.path[1:]
-hostname = result.hostname
-port = result.port
-
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def get_db_connection():
-    conn = psycopg2.connect(
-        dbname = database,
-        user = username,
-        password = password,
-        host = hostname,
-        port = port,
-        sslmode="require")
+    conn = psycopg2.connect(DATABASE_URL)
     return conn
 
 
