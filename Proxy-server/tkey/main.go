@@ -34,7 +34,21 @@ func portConfig() (string, error) {
 }
 
 func enableCORS(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8000")
+
+	origin := r.Header.Get("Origin")
+
+	allowedOrigins := []string {
+		"http://localhost:8000",
+		"https://t95.chalmers.it"
+	}
+
+	for _, allowedOrigin := range allowedOrigins {
+		if origin == allowedOrigin {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			break
+		}
+	}
+
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 

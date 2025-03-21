@@ -1,12 +1,23 @@
-FROM python:3.10-slim
+FROM python:3.13-slim AS builder
 
 WORKDIR /flask_app
 
 COPY . .
 
-RUN apt-get update && apt-get install -y gcc && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y gcc libpq-dev && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+FROM python:3.13-alpine AS runtime
+
+WORKDIR /flask_app
+
+RUN apk add --no-cache libpq
+
+COPY --from=builder /install /usr/local
+
+COPY . .
 
 EXPOSE 8000
 
