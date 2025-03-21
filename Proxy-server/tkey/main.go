@@ -37,9 +37,9 @@ func enableCORS(w http.ResponseWriter, r *http.Request) {
 
 	origin := r.Header.Get("Origin")
 
-	allowedOrigins := []string {
+	allowedOrigins := []string{
 		"http://localhost:8000",
-		"https://t95.chalmers.it"
+		"https://t95.chalmers.it",
 	}
 
 	for _, allowedOrigin := range allowedOrigins {
