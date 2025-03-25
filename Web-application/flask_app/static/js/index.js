@@ -46,7 +46,13 @@ async function HandleAuthentication(event, formID, responseGenerator, signatureU
     );
 
     if (response.ok && response.data.success) {
-        window.location.href = response.data.redirect_url;
+        if(response.data.redirect_url){
+            window.location.href = response.data.redirect_url;
+        }
+        if(response.data.qr_code){        
+            showQRCode(response.data.qr_code);
+        }
+
     } else {
         statusMsg.innerHTML = String(response.data.error);
     }
@@ -73,9 +79,11 @@ async function register(event) {
 }
 
 function authResponseBuilder(challengeData, signatureData) {
+    const totp = document.getElementById("totp").value;
     return {
         session_id: challengeData.session_id,
-        signature: signatureData.signature
+        signature: signatureData.signature,
+        totp: totp
     };
 }
 
