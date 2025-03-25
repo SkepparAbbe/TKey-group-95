@@ -113,7 +113,12 @@ func setResponse(w http.ResponseWriter, response map[string]string) {
 
 // Function to handle /login endpoint
 func loginHandler(w http.ResponseWriter, r *http.Request) {
+	if (r.Method != http.MethodPost) {
+		return
+	}
 	enableCORS(w, r)
+	log.Println("Received request:", r.Method, r.URL)
+	
 	signer, err := createSigner()
 	if err != nil {
 		http.Error(w, "No TKey device found", http.StatusBadRequest)
@@ -137,7 +142,12 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 // Function to handle /registration endpoint
 func registrationHandler(w http.ResponseWriter, r *http.Request) {
+	if (r.Method != http.MethodPost) {
+		return
+	}
 	enableCORS(w, r)
+	log.Println("Received request:", r.Method, r.URL)
+
 	signer, err := createSigner()
 	if err != nil {
 		http.Error(w, "No TKey device found", http.StatusBadRequest)
