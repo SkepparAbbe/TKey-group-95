@@ -86,7 +86,7 @@ a {
     font-weight: 600;
     font-variant: small-caps;
     font-size: 2rem;
-
+    text-align: center;
 }
 
 .b-link {
@@ -103,4 +103,11 @@ a {
     left: 20px;
     color: #000000;
     background-color: #AAAAAA;
+}
+
+#del-user-button {
+    position: absolute;
+    top: 20px;
+    right: 120px;
+    background-color: #FF4040;
 }
