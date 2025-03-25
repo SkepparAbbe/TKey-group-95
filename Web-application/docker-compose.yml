@@ -8,6 +8,7 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgresql://user:password@postgres:5432/db
+      - FLASK_SECRET_KEY=dev
     depends_on:
       - postgres
     volumes:
@@ -22,8 +23,9 @@ services:
       POSTGRES_DB: db
     volumes:
       - postgres_data:/var/lib/postgresql/data  # Persist data between container restarts
+      - ./schema.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5434:5432"  # Expose PostgreSQL to your local machine
 
 volumes:
-  postgres_data:
+  postgres_data: 
