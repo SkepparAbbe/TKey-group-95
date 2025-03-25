@@ -9,6 +9,9 @@ from .auth import load_logged_in_user, login_required, bp
 import psycopg2.extras
 from flask import Flask
 from flask import g, render_template, redirect, url_for, request, session, jsonify
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField, ValidationError
+from flask_wtf.csrf import CSRFProtect, validate_csrf
 
 def create_app(test_config=None):
     # Create and configure the app
@@ -19,6 +22,9 @@ def create_app(test_config=None):
         FLASK_RUN_HOST='localhost',
         FLASK_RUN_PORT=8000
     )
+
+    # Creates csrf protection object that forms from flask-wtf needs.
+    csrf = CSRFProtect(app)
 
     if test_config is None:
         # load the instance config, if it exists when not testing
@@ -72,8 +78,18 @@ def create_app(test_config=None):
     def index():
         return render_template('index.html')
     
+    class LoginForm(FlaskForm):
+        username = StringField('Username')
+        submit = SubmitField('Login')
+
+    class RegisterForm(FlaskForm):
+        username = StringField('Username')
+        submit = SubmitField('Register')
+    
     @app.route('/challenge', methods=['POST'])
     def send_challenge():
+        if not csrf_handler(request):
+            jsonify({'error': 'Invalid CSRF token'}), 400
         data = request.json
         username = data['username']
         session_id = str(uuid.uuid4())
@@ -111,8 +127,18 @@ def create_app(test_config=None):
             'redirect_url': url_for('home')  # Or any other page you want to redirect to
         }), 200
     
+    def csrf_handler(request):
+        csrf_token = request.headers.get('X-CSRFToken')
+        try:
+            validate_csrf(csrf_token)
+        except Exception as e:
+            return False
+        return True
+    
     @app.route('/register', methods=['POST'])
     def register():
+        if not csrf_handler(request):
+            jsonify({'error': 'Invalid CSRF token'}), 400
         data = request.json
         user_session = session.get(data['session_id'])
         username = user_session['username']
@@ -139,12 +165,14 @@ def create_app(test_config=None):
 
     @app.route('/login', methods = ['GET'])
     def login():
-        return render_template('login.html')
+        form = LoginForm()
+        return render_template('login.html', form=form)
     
 
     @app.route('/register', methods = ['GET'])
     def register1():
-        return render_template('register.html')
+        form = RegisterForm()
+        return render_template('register.html', form=form)
 
     @app.route('/logout')
     def logout():

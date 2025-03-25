@@ -18,7 +18,8 @@ async function HandleAuthentication(event, formID, responseGenerator, signatureU
     const challenge = await requestData(
         contents,
         current_url + "/challenge",
-        ContentType.JSON
+        ContentType.JSON,
+        contents.csrf_token
     );
 
     if (!challenge.ok) {
@@ -42,7 +43,8 @@ async function HandleAuthentication(event, formID, responseGenerator, signatureU
     const response = await requestData(
         responseDict, 
         current_url + responseUrlSuffix, 
-        ContentType.JSON
+        ContentType.JSON,
+        contents.csrf_token
     );
 
     if (response.ok && response.data.success) {
@@ -87,13 +89,16 @@ function registerResponseBuilder(challengeData, signatureData) {
     };
 }
 
-async function requestData(message, url, contentType) {
+async function requestData(message, url, contentType, csrf) {
 	try {
+        const headers = {
+            "Content-Type": contentType,
+            ... (csrf && {'X-CSRFToken': csrf})
+        };
+        console.log(headers)
 		const response = await fetch(url, {
 			method: "POST",
-			headers: {
-				"Content-Type": contentType
-			},
+            headers: headers,
 			body: contentType == ContentType.JSON ? JSON.stringify(message) : message
 		});
         const data = await response.json();

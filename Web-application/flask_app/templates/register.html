@@ -16,9 +16,17 @@
             <div class="inner-container">
                 <h2>Register</h2>
                 <form id="registration-form" onsubmit="register(event)"">
-                    <label for=" username">Username</label>
+                    <!-- <label for=" username">Username</label>
                     <input type="text" name="username" id="username">
-                    <input type="submit" value="Register">
+                    <input type="submit" value="Register"> -->
+                    {{form.hidden_tag()}}
+                    <div>
+                        {{ form.username.label }}<br>
+                        {{ form.username() }}
+                    </div>
+                    <div>
+                        {{ form.submit() }}
+                    </div>
                 </form>
                 <p class="status-msg"></p>
             </div>

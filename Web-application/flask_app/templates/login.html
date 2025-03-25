@@ -16,9 +16,16 @@
             <div class="inner-container">
                 <h2>Login</h2>
                 <form id="login-form" onsubmit="authenticate(event)">
-                    <label for="username">Username</label>
-                    <input type="text" name="username" id="username">
-                    <input type="submit" value="Login">
+                    {{ form.hidden_tag()}}
+                    <div>
+                        {{ form.username.label }}<br>
+                        {{ form.username() }}
+                    </div>
+                    <!-- <label for="username">Username</label>
+                    <input type="text" name="username" id="username"> -->
+                    <div>
+                        {{ form.submit() }}
+                    </div>
                 </form>
                 <p class="status-msg"></p>
             </div>
