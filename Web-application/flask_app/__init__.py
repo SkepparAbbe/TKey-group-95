@@ -152,6 +152,7 @@ def create_app(test_config=None):
         return redirect(url_for('index'))
     
     @app.route('/delete')
+    @login_required
     def delete():
         uid = session['user_id']
         conn = database.get_db_connection()
