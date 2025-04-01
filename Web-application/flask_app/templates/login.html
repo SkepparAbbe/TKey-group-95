@@ -16,11 +16,17 @@
             <div class="inner-container">
                 <h2>Login</h2>
                 <form id="login-form" onsubmit="authenticate(event)">
-                    <label for="username">Username</label>
-                    <input type="text" name="username" id="username">
-                    <input type="submit" value="Login">
-                    <label for="totp">TOTP Code</label>
-                    <input type="text" name="totp" id="totp" pattern="\d{6}" required>
+                    {{ form.hidden_tag()}}
+                    <div>
+                        {{ form.username.label }}<br>
+                        {{ form.username() }}
+                        {{ form.totp() }}
+                    </div>
+                    <!-- <label for="username">Username</label>
+                    <input type="text" name="username" id="username"> -->
+                    <div>
+                        {{ form.submit() }}
+                    </div>
                 </form>
                 <p class="status-msg"></p>
             </div>
