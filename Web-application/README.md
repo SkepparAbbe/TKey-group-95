@@ -35,7 +35,7 @@ pip - Included in python3
 
 To start the virtual environment (Linux) - `source .venv/bin/activate`
 
-`pip install flask cryptography requests python-dotenv pytest psychopg2-binary gunicorn`
+`pip install flask cryptography requests python-dotenv pytest psycopg2-binary gunicorn`
 
 ### Run the server in production with Gunicorn
 `cd Web-application`
