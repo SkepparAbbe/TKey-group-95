@@ -88,14 +88,14 @@ function registerResponseBuilder(challengeData, signatureData) {
 }
 
 async function requestData(message, url, contentType) {
-    const response = await fetch(url, {
-        method: "POST",
-        headers: {
-            "Content-Type": contentType
-        },
-        body: contentType == ContentType.JSON ? JSON.stringify(message) : message
-    });
-    try {
+	try {
+		const response = await fetch(url, {
+			method: "POST",
+			headers: {
+				"Content-Type": contentType
+			},
+			body: contentType == ContentType.JSON ? JSON.stringify(message) : message
+		});
         const data = await response.json();
         return { ok: response.ok, data: data };
     } catch (e) {

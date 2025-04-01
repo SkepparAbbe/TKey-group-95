@@ -1,5 +1,4 @@
 import os
-import requests
 import uuid
 import time
 import hashlib
@@ -15,8 +14,8 @@ def create_app(test_config=None):
     # Create and configure the app
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
-        SECRET_KEY='dev',
-        DATABASE=os.path.join(app.instance_path, 'flask.sqlite'),
+        SECRET_KEY=os.getenv("FLASK_SECRET_KEY"),
+        DATABASE=os.environ.get('DATABASE_URL'),
         FLASK_RUN_HOST='localhost',
         FLASK_RUN_PORT=8000
     )
@@ -50,12 +49,6 @@ def create_app(test_config=None):
     def validate(msg: str, sig: str, key: str):
         return verify(msg, sig, key)
     
-    def register_key():
-        challenge = generate_challenge()
-        response = requests.post("http://localhost:8081/registration", data=challenge)
-        go_response = response.json()
-        return [go_response, challenge]
-    
     @app.before_request
     def start_timer():
         """Runs before each request to store start time."""
@@ -69,11 +62,6 @@ def create_app(test_config=None):
             print(f"⏳ Endpoint {request.path} took {elapsed_time:.4f} seconds")
 
         return response
-
-    #def send_challenge(challenge: str):
-    #    response = requests.post("http://localhost:8081/login", data=challenge)
-    #    go_response = response.json()
-    #    return go_response
 
     # a simple page that says hello
     @app.route('/hello')
@@ -139,7 +127,7 @@ def create_app(test_config=None):
             if user:
                 return jsonify({'error': 'user already exists'}), 401
             cursor.execute("""
-                         INSERT INTO "user" (username, publicKey)
+                         INSERT INTO "user" (username, publickey)
                          VALUES (%s, %s)""", (username, public_key))
             conn.commit()
             conn.close()
@@ -160,6 +148,18 @@ def create_app(test_config=None):
 
     @app.route('/logout')
     def logout():
+        session.clear()
+        return redirect(url_for('index'))
+    
+    @app.route('/delete')
+    @login_required
+    def delete():
+        uid = session['user_id']
+        conn = database.get_db_connection()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor.execute('DELETE FROM "user" WHERE id=%s', (uid,))
+        conn.commit()
+        conn.close()
         session.clear()
         return redirect(url_for('index'))
 

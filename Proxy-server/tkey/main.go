@@ -34,7 +34,21 @@ func portConfig() (string, error) {
 }
 
 func enableCORS(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8000")
+
+	origin := r.Header.Get("Origin")
+
+	allowedOrigins := []string{
+		"http://localhost:8000",
+		"https://t95.chalmers.it",
+	}
+
+	for _, allowedOrigin := range allowedOrigins {
+		if origin == allowedOrigin {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			break
+		}
+	}
+
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
@@ -99,7 +113,12 @@ func setResponse(w http.ResponseWriter, response map[string]string) {
 
 // Function to handle /login endpoint
 func loginHandler(w http.ResponseWriter, r *http.Request) {
+	if (r.Method != http.MethodPost) {
+		return
+	}
 	enableCORS(w, r)
+	log.Println("Received request:", r.Method, r.URL)
+	
 	signer, err := createSigner()
 	if err != nil {
 		http.Error(w, "No TKey device found", http.StatusBadRequest)
@@ -123,7 +142,12 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 // Function to handle /registration endpoint
 func registrationHandler(w http.ResponseWriter, r *http.Request) {
+	if (r.Method != http.MethodPost) {
+		return
+	}
 	enableCORS(w, r)
+	log.Println("Received request:", r.Method, r.URL)
+
 	signer, err := createSigner()
 	if err != nil {
 		http.Error(w, "No TKey device found", http.StatusBadRequest)

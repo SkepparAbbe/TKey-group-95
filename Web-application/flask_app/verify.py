@@ -7,12 +7,12 @@ from cryptography.hazmat.primitives.hashes import Hash
 from cryptography.exceptions import InvalidSignature
 import argparse
 import base64
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 import os
 
 ### GET the public key
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-load_dotenv(os.path.join(base_dir, ".env"))
+#load_dotenv(os.path.join(base_dir, ".env"))
 
 # Test data
 message = "hemligtt"
