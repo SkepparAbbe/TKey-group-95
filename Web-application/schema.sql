@@ -5,5 +5,4 @@ CREATE TABLE "user" (
     username TEXT UNIQUE NOT NULL,
     publickey TEXT UNIQUE NOT NULL,
     secret TEXT NOT NULL
-
 );
