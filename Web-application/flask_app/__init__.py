@@ -10,6 +10,8 @@ import psycopg2.extras
 from flask import Flask
 from flask import g, render_template, redirect, url_for, request, session, jsonify
 
+from .qrGen import generate_qr, verify_totp 
+
 def create_app(test_config=None):
     # Create and configure the app
     app = Flask(__name__, instance_relative_config=True)
@@ -102,10 +104,18 @@ def create_app(test_config=None):
             db.close()
             return jsonify({'error': 'invalid credentials'}), 401
         db.close()
+
+        if 'totp' not in data:
+            return jsonify({'error': 'TOTP code is required'}), 401
+
         if not validate(challenge, signature, user['publickey']):
             return jsonify({'error': 'invalid credentials'}), 401
         session.clear()
         session['user_id'] = user['id']
+
+        if not verify_totp(user['secret'], data['totp']):
+            return jsonify({'error': 'invalid TOTP code'}), 401
+
         return jsonify({
             'success': 'Successfully logged in',
             'redirect_url': url_for('home')  # Or any other page you want to redirect to
@@ -124,18 +134,28 @@ def create_app(test_config=None):
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             cursor.execute('SELECT * FROM "user" WHERE username=%s', (username,))
             user = cursor.fetchone()
+
             if user:
                 return jsonify({'error': 'user already exists'}), 401
+            
+            img_str, secret = generate_qr(username) #generate qr code and secret
             cursor.execute("""
-                         INSERT INTO "user" (username, publickey)
-                         VALUES (%s, %s)""", (username, public_key))
+                         INSERT INTO "user" (username, publickey,secret)
+                         VALUES (%s, %s,%s)""", (username, public_key,secret))
             conn.commit()
-            conn.close()
-        return jsonify({
-            'success': 'Successfully registered user',
-            'redirect_url': url_for('login')  # Or any other page you want to redirect to
-        }), 200
+            conn.close()        
+            return jsonify({
+                'success': 'Successfully registered',
+                'qr_code': img_str,
+                'redirect_url': url_for('show_qr',qr_code=img_str)  # Or any other page you want to redirect to
+            }), 200
+        return jsonify({'error': 'invalid credentials'}), 401
+    
 
+    @app.route('/show-qr')
+    def show_qr():
+        qr_code = request.args.get('qr_code')
+        return render_template('register_qr.html', qr_code=qr_code)
 
     @app.route('/login', methods = ['GET'])
     def login():
