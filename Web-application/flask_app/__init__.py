@@ -20,9 +20,7 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY=os.getenv("FLASK_SECRET_KEY"),
-        DATABASE=os.environ.get('DATABASE_URL'),
-        FLASK_RUN_HOST='localhost',
-        FLASK_RUN_PORT=8000
+        DATABASE=os.environ.get('DATABASE_URL')
     )
 
     # Creates csrf protection object that forms from flask-wtf needs.
