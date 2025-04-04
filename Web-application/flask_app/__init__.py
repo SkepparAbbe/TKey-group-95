@@ -12,6 +12,8 @@ from flask import g, render_template, redirect, url_for, request, session, jsoni
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, ValidationError
 from flask_wtf.csrf import CSRFProtect, validate_csrf
+from wtforms.validators import DataRequired
+
 
 from .qrGen import generate_qr, verify_totp 
 
@@ -24,6 +26,7 @@ def create_app(test_config=None):
         FLASK_RUN_HOST='localhost',
         FLASK_RUN_PORT=8000
     )
+
 
     # Creates csrf protection object that forms from flask-wtf needs.
     csrf = CSRFProtect(app)
@@ -40,7 +43,6 @@ def create_app(test_config=None):
         os.makedirs(app.instance_path)
     except OSError:
         pass
-
 
     from . import database
     database.init_app(app)
@@ -81,12 +83,12 @@ def create_app(test_config=None):
         return render_template('index.html')
     
     class LoginForm(FlaskForm):
-        username = StringField('Username')
-        totp = StringField('TOTP')
+        username = StringField('Username',validators=[DataRequired(message="Username is required")])
+        totp = StringField('TOTP',validators=[DataRequired(message="TOTP is required")])
         submit = SubmitField('Login')
 
     class RegisterForm(FlaskForm):
-        username = StringField('Username')
+        username = StringField('Username',validators=[DataRequired(message="Username is required")])
         submit = SubmitField('Register')
     
     @app.route('/challenge', methods=['POST'])
@@ -161,35 +163,56 @@ def create_app(test_config=None):
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             cursor.execute('SELECT * FROM "user" WHERE username=%s', (username,))
             user = cursor.fetchone()
-
             if user:
                 return jsonify({'error': 'user already exists'}), 401
-            
             img_str, secret = generate_qr(username) #generate qr code and secret
-            cursor.execute("""
-                         INSERT INTO "user" (username, publickey,secret)
-                         VALUES (%s, %s,%s)""", (username, public_key,secret))
-            conn.commit()
-            conn.close()        
+
+            session['p_register'] = {
+                'username': username,
+                'public_key': public_key,
+                'secret': secret,
+                'qr_code': img_str
+            }
+            conn.close()
             return jsonify({
                 'success': 'Successfully registered',
-                'qr_code': img_str,
-                'redirect_url': url_for('show_qr',qr_code=img_str)  # Or any other page you want to redirect to
+                'redirect_url': url_for('show_qr')  # Or any other page you want to redirect to
             }), 200
         return jsonify({'error': 'invalid credentials'}), 401
     
+    @app.route('/confirm-totp', methods=['POST'])
+    def confirm_totp():
+        if not csrf_handler(request):
+            jsonify({'error': 'Invalid CSRF token'}), 400
+        p_data = session.get('p_register')
+        if not p_data:
+            return redirect(url_for('index'))
+        totp_code = request.form.get('totp')
+        if verify_totp(p_data['secret'], totp_code):
+            conn = database.get_db_connection()
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            cursor.execute("""
+                        INSERT INTO "user" (username, publickey,secret)
+                        VALUES (%s, %s,%s)""", (p_data['username'], p_data['public_key'], p_data['secret']))
+            conn.commit()
+            conn.close()
+            session.pop('p_register', None)
+            return redirect(url_for('login'))
+        else:
+            return render_template('register_qr.html', qr_code=p_data['qr_code'], error='Invalid TOTP code')
 
     @app.route('/show-qr')
     def show_qr():
-        qr_code = request.args.get('qr_code')
-        return render_template('register_qr.html', qr_code=qr_code)
+        p_data = session.get('p_register')
+        if not p_data:
+            return redirect(url_for('index'))
+        return render_template('register_qr.html', qr_code=p_data['qr_code'])
 
     @app.route('/login', methods = ['GET'])
     def login():
         form = LoginForm()
         return render_template('login.html', form=form)
     
-
     @app.route('/register', methods = ['GET'])
     def register1():
         form = RegisterForm()
