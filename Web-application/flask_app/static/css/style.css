@@ -35,6 +35,11 @@ main {
     border-radius: 8px;  /* Optional: for rounded corners */
 }
 
+.module-enlarged {
+    height: 600px;
+    width: 500px;
+}
+
 h2 {
     color: #C9D1D9;
     font-size: 24px; /* Adjust as needed */
@@ -163,4 +168,19 @@ h2 {
 
 .back-link:hover {
     color: #fff;
+}
+
+.title {
+    font-size: 22px;
+    color: #C9D1D9;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.qr-code {
+    display: block;
+    margin: 20px auto;
+    width: 150px;  /* You can adjust this based on your design needs */
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
