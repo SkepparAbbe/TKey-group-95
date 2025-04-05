@@ -11,25 +11,27 @@
 
 <body>
     <main>
-        <a id="back-button" href="{{ url_for('index') }}">Back</a>
-        <div class="form-container">
-            <div class="inner-container">
-                <h2>Login</h2>
-                <form id="login-form" onsubmit="authenticate(event)">
-                    {{ form.hidden_tag()}}
-                    <div>
-                        {{ form.username.label }}<br>
-                        {{ form.username() }}
-                        {{ form.totp() }}
-                    </div>
-                    <!-- <label for="username">Username</label>
-                    <input type="text" name="username" id="username"> -->
-                    <div>
-                        {{ form.submit() }}
-                    </div>
-                </form>
-                <p class="status-msg"></p>
-            </div>
+        <div class="module">
+            <a href="/" class="back-link">&#8592;</a>
+            <h2>Login</h2>
+            <form id="login-form" onsubmit="authenticate(event)">
+                {{ form.hidden_tag() }}
+            
+                <div class="form-field">
+                    {{ form.username.label }}
+                    {{ form.username(class_="input-field") }}
+                </div>
+            
+                <div class="form-field">
+                    {{ form.totp.label }}
+                    {{ form.totp(class_="input-field") }}
+                </div>
+            
+                <div class="form-field">
+                    {{ form.submit() }}
+                </div>
+            </form>
+            <p class="status-msg"></p>
         </div>
     </main>
     <script src="{{url_for('static', filename='js/index.js')}}"></script>

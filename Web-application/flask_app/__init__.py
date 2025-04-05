@@ -121,19 +121,19 @@ def create_app(test_config=None):
         user = cursor.fetchone()
         if not user:
             db.close()
-            return jsonify({'error': 'invalid credentials'}), 401
+            return jsonify({'error': 'Invalid credentials'}), 401
         db.close()
 
         if 'totp' not in data:
             return jsonify({'error': 'TOTP code is required'}), 401
 
         if not validate(challenge, signature, user['publickey']):
-            return jsonify({'error': 'invalid credentials'}), 401
+            return jsonify({'error': 'Invalid credentials'}), 401
         session.clear()
         session['user_id'] = user['id']
 
         if not verify_totp(user['secret'], data['totp']):
-            return jsonify({'error': 'invalid TOTP code'}), 401
+            return jsonify({'error': 'Invalid TOTP code'}), 401
 
         return jsonify({
             'success': 'Successfully logged in',
@@ -164,7 +164,7 @@ def create_app(test_config=None):
             cursor.execute('SELECT * FROM "user" WHERE username=%s', (username,))
             user = cursor.fetchone()
             if user:
-                return jsonify({'error': 'user already exists'}), 401
+                return jsonify({'error': 'User already exists'}), 401
             img_str, secret = generate_qr(username) #generate qr code and secret
 
             session['p_register'] = {
@@ -178,7 +178,7 @@ def create_app(test_config=None):
                 'success': 'Successfully registered',
                 'redirect_url': url_for('show_qr')  # Or any other page you want to redirect to
             }), 200
-        return jsonify({'error': 'invalid credentials'}), 401
+        return jsonify({'error': 'Invalid credentials'}), 401
     
     @app.route('/confirm-totp', methods=['POST'])
     def confirm_totp():
