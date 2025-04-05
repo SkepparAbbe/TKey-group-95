@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mnemonic Phrase</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .error-message {
+            color: #dc3545;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            background-color: #f8d7da;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Your Mnemonic Phrase</h1>
+        <p>Please save this mnemonic phrase securely. It is required to recover your account.</p>
+        
+        {% if error %}
+            <div class="error-message">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <div class="mnemonic-box">
+            <strong>{{ mnemonic }}</strong>
+        </div>
+
+        <form action="{{ url_for('finalize_account') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="mnemonic" value="{{ mnemonic }}">
+            <button type="submit" class="btn">Finalize Account</button>
+        </form>
+    </div>
+</body>
+</html>
