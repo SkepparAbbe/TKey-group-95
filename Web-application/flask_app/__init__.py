@@ -16,6 +16,7 @@ from wtforms import StringField, SubmitField, ValidationError
 from flask_wtf.csrf import CSRFProtect, validate_csrf
 from wtforms.validators import DataRequired
 
+from .recovery import generate_mnemonic, convert_to_seed, hash_seed, verify_mnemonic
 
 from .qrGen import generate_qr, verify_totp 
 
@@ -169,7 +170,10 @@ def create_app(test_config=None):
                 'username': username,
                 'public_key': public_key,
                 'secret': secret,
-                'qr_code': img_str
+                'qr_code': img_str,
+                'mnemonic' : None,
+                'salt' : None,
+                'hash' : None,
             }
             conn.close()
             return jsonify({
@@ -187,24 +191,55 @@ def create_app(test_config=None):
             return redirect(url_for('index'))
         totp_code = request.form.get('totp')
         if verify_totp(p_data['secret'], totp_code):
-            conn = database.get_db_connection()
-            cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-            cursor.execute("""
-                        INSERT INTO "user" (username, publickey,secret)
-                        VALUES (%s, %s,%s)""", (p_data['username'], p_data['public_key'], p_data['secret']))
-            conn.commit()
-            conn.close()
-            session.pop('p_register', None)
-            return redirect(url_for('login'))
+            mnemonic = generate_mnemonic()
+            hash_, salt = hash_seed(convert_to_seed(mnemonic))
+            
+            p_data['mnemonic'] = mnemonic
+            p_data['salt'] = salt
+            p_data['hash'] = hash_
+            session['p_register'] = p_data
+
+            return redirect(url_for('show_mnemonic'))
         else:
             return render_template('register_qr.html', qr_code=p_data['qr_code'], error='Invalid TOTP code')
+
+    @app.route('/show-mnemonic')
+    def show_mnemonic():
+        p_data = session.get('p_register')
+        if not p_data:
+            return redirect(url_for('index'))
+        return render_template('register_mnemonic.html', mnemonic=p_data.get('mnemonic'), error=None)
+
+    @app.route('/finalize-account', methods=['POST'])
+    def finalize_account():
+        if not csrf_handler(request):
+            jsonify({'error': 'Invalid CSRF token'}), 400
+        p_data = session.get('p_register')
+        if not p_data:
+            return redirect(url_for('index'))
+        
+        mnemonic = request.form.get('mnemonic')
+
+        if not verify_mnemonic(p_data['hash'], p_data['salt'], mnemonic):
+            return render_template('register_mnemonic.html', error='Invalid mnemonic')
+        
+        conn = database.get_db_connection()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor.execute("""
+            INSERT INTO "user" (username, publickey, secret, salt, hash)
+            VALUES (%s, %s, %s, %s, %s)""", (p_data['username'], p_data['public_key'], p_data['secret'], p_data['salt'], p_data['hash']))
+        conn.commit()
+        conn.close() 
+        session.pop('p_register', None)
+        return redirect(url_for('login'))
 
     @app.route('/show-qr')
     def show_qr():
         p_data = session.get('p_register')
         if not p_data:
             return redirect(url_for('index'))
-        return render_template('register_qr.html', qr_code=p_data['qr_code'])
+        qr_code = p_data.pop('qr_code',None) # Remove?
+        return render_template('register_qr.html', qr_code=qr_code, error=None)
 
     @app.route('/login', methods = ['GET'])
     def login():
