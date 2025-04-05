@@ -3,8 +3,17 @@
     <title>Scan QR Code</title>
 </head>
 <body>
-    <h2>Scan QR code with your authenticator app:</h2>
+    <h2>Scan the QR code with your authentication app:</h2>
     <img src="data:image/png;base64,{{ qr_code }}" alt="qr_code">
-    <p>Then, proceed to <a href="/login">login</a></p>
+    <form method="POST" action="/confirm-totp">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <label for="totp">Enter TOTP Code:</label>
+        <input type="text" id="totp" name="totp" required>
+        <input type="submit" value="Verifiera">
+    </form>
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    <p>Then proceed to the <a href="/login">login page</a></p>
 </body>
 </html>
