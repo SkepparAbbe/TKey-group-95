@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset account</title>
+
+    <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}">
+</head>
+
+<body>
+    <main>
+      <div class="module" id="wizard-container">
+        <form id="recovery-wizard">
+          <!-- Step 1: Username -->
+          <section class="wizard-step active" data-step="1">
+            <h2>Account Recovery</h2>
+            <p>Please enter your username to begin:</p>
+            <input type="text" name="username" required style="width: 100%; padding: 0.5rem;" />
+            <div class="controls">
+              <span></span>
+              <button type="button2" class="next-btn">Next</button>
+            </div>
+          </section>
+  
+          <!-- Step 2: 12-word phrase -->
+          <section class="wizard-step" data-step="2">
+            <h2>Enter Recovery Phrase</h2>
+            <p>Type each word in the order it was given to you:</p>
+            <div class="recovery-grid">
+              <!-- 12 word inputs -->
+              ${Array.from({ length: 12 }, (_, i) => `
+                <div class="word-input">
+                  <label for="word${i + 1}">${i + 1}</label>
+                  <input type="text" id="word${i + 1}" name="word${i + 1}" required autocomplete="off"/>
+                </div>
+              `).join('')}
+            </div>
+            <div class="controls">
+              <button type="button2" class="prev-btn">Back</button>
+              <button type="button2" class="next-btn">Continue</button>
+            </div>
+          </section>
+  
+          <!-- Step 3: Confirm + verify -->
+          <section class="wizard-step" data-step="3">
+            <h2>Final Step</h2>
+            <p>Insert your device and click verify to complete recovery.</p>
+            <h4>Your phrase:</h4>
+            <ul id="confirm-words"></ul>
+            <div class="controls">
+              <button type="button2" class="prev-btn">Back</button>
+              <button type="submit">Verify</button>
+            </div>
+          </section>
+        </form>
+      </div>
+    </main>
+  
+    <script>
+      let currentStep = 1;
+      const moduleBox = document.getElementById("wizard-container");
+      const steps = document.querySelectorAll(".wizard-step");
+  
+      const updateSteps = () => {
+        steps.forEach(step => step.classList.remove("active"));
+        const current = document.querySelector(`.wizard-step[data-step="${currentStep}"]`);
+        current.classList.add("active");
+  
+        // Resize module
+        if (currentStep === 2) {
+          moduleBox.classList.remove("module");
+          moduleBox.classList.add("module-enlarged");
+        } else {
+          moduleBox.classList.remove("module-enlarged");
+          moduleBox.classList.add("module");
+        }
+      };
+  
+      document.querySelectorAll(".next-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (currentStep === 2) {
+            const words = [];
+            for (let i = 1; i <= 12; i++) {
+              words.push(document.getElementById(`word${i}`).value.trim());
+            }
+            const confirmList = document.getElementById("confirm-words");
+            confirmList.innerHTML = words.map((w, i) => `<li><strong>${i + 1}:</strong> ${w}</li>`).join("");
+          }
+          currentStep++;
+          updateSteps();
+        });
+      });
+  
+      document.querySelectorAll(".prev-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          currentStep--;
+          updateSteps();
+        });
+      });
+  
+      document.getElementById("recovery-wizard").addEventListener("submit", (e) => {
+        e.preventDefault();
+        alert("Recovery process complete!");
+        // Add your actual recovery logic here
+      });
+  
+      // Enter key navigation for word inputs
+      document.addEventListener("DOMContentLoaded", () => {
+        for (let i = 1; i <= 12; i++) {
+          const input = document.getElementById(`word${i}`);
+          input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              const next = document.getElementById(`word${i + 1}`);
+              if (next) next.focus();
+              else document.querySelector(".next-btn").focus();
+            }
+          });
+        }
+      });
+  
+      updateSteps();
+    </script>
+  </body>
+
+</html>

@@ -254,6 +254,10 @@ def create_app(test_config=None):
         form = LoginForm()
         return render_template('login.html', form=form)
     
+    @app.route('/recover')
+    def recover():
+        return render_template('recover.html')
+    
     @app.route('/register', methods = ['GET'])
     def register1():
         form = RegisterForm()

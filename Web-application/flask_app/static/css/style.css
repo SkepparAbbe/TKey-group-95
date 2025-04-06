@@ -182,3 +182,48 @@ h2 {
     margin: 20px auto;
     width: 200px; 
 }
+
+
+
+
+
+.wizard-step {
+    display: none;
+  }
+
+  .wizard-step.active {
+    display: block;
+  }
+
+  .recovery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  .word-input label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 0.3rem;
+  }
+
+  .word-input input {
+    width: 100%;
+    padding: 0.4rem;
+  }
+
+  .button2 {
+    margin-top: 1rem;
+    padding: 0.6rem 1.2rem;
+    font-weight: bold;
+  }
+
+  .controls {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  ul#confirm-words {
+    padding-left: 1rem;
+    margin-top: 1rem;
+  }
