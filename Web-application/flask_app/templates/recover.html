@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset account</title>
+    <title>Recover account</title>
 
     <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}">
 </head>
@@ -12,7 +12,7 @@
 <body>
   <main>
     <!-- Stage 1 -->
-    <div id="stage-1" class="module">
+    <div id="stage-1" class="module module-wizard active">
       <a href="/" class="back-link">&#8592;</a>
       <h2>Enter Username</h2>
       <form id="stage-1-form">
@@ -26,7 +26,7 @@
     </div>
 
     <!-- Stage 2 -->
-    <div id="stage-2" class="module module-enlarged" style="display: none;">
+    <div id="stage-2" class="module module-enlarged module-wizard">
       <a href="javascript:void(0)" class="back-link" onclick="goToStage(1)">&#8592;</a>
       <h2>Enter your 12-word Mnemonic</h2>
       <form id="stage-2-form">
@@ -52,7 +52,7 @@
     </div>
 
     <!-- Stage 3 -->
-    <div id="stage-3" class="module" style="display: none;">
+    <div id="stage-3" class="module module-wizard">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <a href="javascript:void(0)" class="back-link" onclick="goToStage(2)">&#8592;</a>
       <h2>Insert New Device</h2>

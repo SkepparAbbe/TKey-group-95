@@ -27,12 +27,12 @@ main {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);  /* Centers the container */
+    transform: translate(-50%, -50%);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;  /* Optional: for rounded corners */
+    border-radius: 8px; 
 }
 
 .module-enlarged {
@@ -40,10 +40,18 @@ main {
     width: 500px;
 }
 
+.module-wizard {
+    display: none;
+}
+
+.module-wizard.active {
+    display: flex;
+}
+
 h2 {
     color: #C9D1D9;
-    font-size: 24px; /* Adjust as needed */
-    margin-bottom: 20px; /* Add space between the heading and the form */
+    font-size: 24px;
+    margin-bottom: 20px;
 }
 
 .form-field {
@@ -53,7 +61,7 @@ h2 {
 }
 
 .form-field label {
-    color: #C9D1D9; /* light text on dark bg */
+    color: #C9D1D9;
     font-size: 14px;
     margin-bottom: 6px;
 }
@@ -71,7 +79,7 @@ h2 {
 .form-field input:focus {
     outline: none;
     border-color: #1F6FEB;
-    box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.2); /* subtle glow */
+    box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.2);
 }
 
 .input-field {
@@ -92,7 +100,7 @@ h2 {
     text-align: center;
     color: #F85149;
     font-weight: bold;
-    margin-top: 10px; /* Add spacing from the form */
+    margin: 10px;
     height: 20px; /* Set a fixed height for the message area */
     line-height: 20px; /* Center the text vertically */
 }
@@ -104,7 +112,7 @@ h2 {
     border: none;
     cursor: pointer;
     transition: background-color 0.3s ease;
-    text-decoration: none; /* removes underline */
+    text-decoration: none; /* Removes underline */
     width: 200px;
     height: 100px;
     display: flex;
@@ -147,12 +155,12 @@ h2 {
     padding: 20px;
     border-radius: 8px;
     display: flex;
-    flex-direction: column;  /* Default vertical layout */
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 20px;  /* Space between the elements */
     text-align: center;
-    width: 300px;  /* Set a fixed width for the container */
+    width: 300px; 
     margin: 0 auto;  /* Centers the container horizontally */
 }
 
@@ -208,6 +216,7 @@ h2 {
     text-decoration: underline;
 }
 
+/* recover.html */
 .mnemonic-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -216,7 +225,7 @@ h2 {
     padding: 0 20px;
 }
 
-/* Mnemonic Phrase */
+/* register_mnemonic.html */
 .mnemonic-box {
     background-color: #0D1117;
     color: #FFFFFF;
@@ -225,28 +234,28 @@ h2 {
     margin-bottom: 20px;
     font-size: 18px;
     word-wrap: break-word;
-    text-align: center; /* Centrera hela innehållet */
+    text-align: center; 
 }
 
-/* Layout för varje rad */
+/* register_mnemonic.html */
 .mnemonic-phrase {
     display: flex;
     flex-direction: column;
-    gap: 10px;  /* Mellanrum mellan raderna */
+    gap: 10px; /* Space between the phrases */
 }
 
-/* Rad med ord */
+/* register_mnemonic.html */
 .mnemonic-row {
     display: flex;
-    justify-content: center; /* Detta ser till att varje ord är centrerat horisontellt */
-    gap: 10px;  /* Mellanrum mellan varje ord */
-    align-items: center; /* Detta centrerar ord vertikalt inom raden */
+    justify-content: center; 
+    gap: 10px; /* Space between the words */
+    align-items: center; 
 }
 
-/* Ord i raden */
+/* register_mnemonic.html */
 .mnemonic-row span {
     display: inline-block;
     font-weight: bold;
     word-break: break-word;
-    font-size: 1.2rem; /* Justera storleken på orden för att göra dem tydligare */
+    font-size: 1.2rem; 
 }

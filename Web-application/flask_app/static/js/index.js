@@ -96,28 +96,35 @@ function goToStage(currentStage, route) {
         body: bodyData,
         headers: {
             'Content-Type': 'application/json',
-            ... (csrfToken && {'X-CSRFToken': csrfToken})
+            ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {})
         }
     })
     .then(response => response.json())
     .then(data => {
+        const errorElem = document.getElementById(`stage-${currentStage}-error`);
+        
         if (data.error) {
-            const errorElem = document.getElementById(`stage-${currentStage}-error`);
             if (errorElem) {
                 errorElem.innerText = data.error;
             }
-        } else {
-            // Göm nuvarande steg
-            const currentStageElem = document.getElementById(`stage-${currentStage}`);
-            if (currentStageElem) {
-                currentStageElem.style.display = 'none';
-            }
+            return;
+        }
 
-            // Visa nästa steg
-            const nextStageElem = document.getElementById(`stage-${currentStage + 1}`);
-            if (nextStageElem) {
-                nextStageElem.style.display = 'block';
-            }
+        // Hide current stage
+        const currentStageElem = document.getElementById(`stage-${currentStage}`);
+        if (currentStageElem) {
+            currentStageElem.classList.remove('active');
+        }
+
+        // Show next stage
+        const nextStageElem = document.getElementById(`stage-${currentStage + 1}`);
+        if (nextStageElem) {
+            nextStageElem.classList.add('active');
+        }
+
+        // Clear previous errors
+        if (errorElem) {
+            errorElem.innerText = '';
         }
     })
     .catch(error => {
@@ -128,6 +135,7 @@ function goToStage(currentStage, route) {
         }
     });
 }
+
 
 function authResponseBuilder(challengeData, signatureData) {
     const totp = document.getElementById("totp").value;
