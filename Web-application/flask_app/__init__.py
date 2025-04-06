@@ -162,8 +162,16 @@ def create_app(test_config=None):
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             cursor.execute('SELECT * FROM "user" WHERE username=%s', (username,))
             user = cursor.fetchone()
+            
             if user:
                 return jsonify({'error': 'User already exists'}), 401
+
+            cursor.execute('SELECT * FROM "user" WHERE publickey=%s', (public_key,))
+            pkey = cursor.fetchone()
+
+            if pkey:
+                return jsonify({'error': 'User with TKey already exists'}), 401
+            
             img_str, secret = generate_qr(username) #generate qr code and secret
 
             session['p_register'] = {
