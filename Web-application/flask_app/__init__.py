@@ -216,7 +216,11 @@ def create_app(test_config=None):
         p_data = session.get('p_register')
         if not p_data:
             return redirect(url_for('index'))
-        return render_template('register_mnemonic.html', mnemonic=p_data.get('mnemonic'), error=None)
+        
+        # Splits the string to a list of words
+        mnemonic_words = p_data.get('mnemonic').split()  # Splits based on blank line
+        
+        return render_template('register_mnemonic.html', mnemonic_words=mnemonic_words, error=None)
 
     @app.route('/finalize-account', methods=['POST'])
     def finalize_account():
@@ -228,9 +232,6 @@ def create_app(test_config=None):
         
         mnemonic = request.form.get('mnemonic')
 
-        if not verify_mnemonic(p_data['hash'], p_data['salt'], mnemonic):
-            return render_template('register_mnemonic.html', error='Invalid mnemonic')
-        
         conn = database.get_db_connection()
         cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cursor.execute("""

@@ -4,38 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mnemonic Phrase</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <style>
-        .error-message {
-            color: #dc3545;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #f5c6cb;
-            border-radius: 4px;
-            background-color: #f8d7da;
-        }
-    </style>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}">
 </head>
 <body>
-    <div class="container">
-        <h1>Your Mnemonic Phrase</h1>
-        <p>Please save this mnemonic phrase securely. It is required to recover your account.</p>
-        
-        {% if error %}
-            <div class="error-message">
-                {{ error }}
+    <main>
+        <div class="module module-enlarged">
+            <h2 class="title">Your Mnemonic Phrase</h2>
+            <p class="title-small">Please save this mnemonic phrase securely. It is required to recover your account.</p>
+            
+            {% if error %}
+                <div class="status-msg">{{ error }}</div>
+            {% endif %}
+
+            <div class="mnemonic-box">
+                <div class="mnemonic-phrase">
+                    <div class="mnemonic-row">
+                        <span>{{ mnemonic_words[0] }}</span>
+                        <span>{{ mnemonic_words[1] }}</span>
+                        <span>{{ mnemonic_words[2] }}</span>
+                        <span>{{ mnemonic_words[3] }}</span>
+                        <span>{{ mnemonic_words[4] }}</span>
+                        <span>{{ mnemonic_words[5] }}</span>
+                    </div>
+                    <div class="mnemonic-row">
+                        <span>{{ mnemonic_words[6] }}</span>
+                        <span>{{ mnemonic_words[7] }}</span>
+                        <span>{{ mnemonic_words[8] }}</span>
+                        <span>{{ mnemonic_words[9] }}</span>
+                        <span>{{ mnemonic_words[10] }}</span>
+                        <span>{{ mnemonic_words[11] }}</span>
+                    </div>
+                </div>
             </div>
-        {% endif %}
 
-        <div class="mnemonic-box">
-            <strong>{{ mnemonic }}</strong>
+            <form action="{{ url_for('finalize_account') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="mnemonic" value="{{ mnemonic }}">
+                <button type="submit" class="button button-wizard">Finalize Account</button>
+            </form>
         </div>
-
-        <form action="{{ url_for('finalize_account') }}" method="POST">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="mnemonic" value="{{ mnemonic }}">
-            <button type="submit" class="btn">Finalize Account</button>
-        </form>
-    </div>
+    </main>
 </body>
 </html>
