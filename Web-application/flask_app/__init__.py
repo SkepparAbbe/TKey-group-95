@@ -282,6 +282,10 @@ def create_app(test_config=None):
         conn = database.get_db_connection()
         cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cursor.execute('DELETE FROM "user" WHERE id=%s', (uid,))
+        conn.commit()
+        conn.close()
+        session.clear()
+        return redirect(url_for('index'))
 
     @app.route('/recover-user', methods=['POST'])
     def recover_user():
