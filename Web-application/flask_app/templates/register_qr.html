@@ -1,19 +1,35 @@
 <html>
-<head>
-    <title>Scan QR Code</title>
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Scan QR code</title>
+    
+        <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}">
+    </head>
 <body>
-    <h2>Scan the QR code with your authentication app:</h2>
-    <img src="data:image/png;base64,{{ qr_code }}" alt="qr_code">
-    <form method="POST" action="/confirm-totp">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <label for="totp">Enter TOTP Code:</label>
-        <input type="text" id="totp" name="totp" required>
-        <input type="submit" value="Verifiera">
-    </form>
-    {% if error %}
-        <p style="color: red;">{{ error }}</p>
-    {% endif %}
-    <p>Then proceed to the <a href="/login">login page</a></p>
+    <main>
+        <div class="module module-enlarged">
+            <a href="/" class="back-link">&#8592;</a>
+            <h2 class="title">Scan the QR code with your authentication app:</h2>
+            <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code" class="qr-code">
+
+            <form method="POST" action="/confirm-totp">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                
+                <div class="form-field">
+                    <label for="totp">Enter TOTP Code:</label>
+                    <input type="text" id="totp" name="totp" class="input-field" required>
+                </div>
+                
+                <div class="form-field">
+                    <input type="submit" value="Verify">
+                </div>
+            </form>
+
+            {% if error %}
+                <p class="status-msg">{{ error }}</p>
+            {% endif %}
+        </div>
+    </main>
 </body>
 </html>
