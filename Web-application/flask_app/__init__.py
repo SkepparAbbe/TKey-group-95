@@ -96,6 +96,11 @@ def create_app(test_config=None):
         username = StringField('Username',validators=[DataRequired(message="Username is required")])
         submit = SubmitField('Register')
     
+    class RecoveryForm(FlaskForm):
+        username = StringField('Username',validators=[DataRequired(message="Username is required")])
+        submit = SubmitField('Recover')
+        
+    
     @app.route('/challenge', methods=['POST'])
     def send_challenge():
         if not csrf_handler(request):
@@ -257,7 +262,8 @@ def create_app(test_config=None):
     
     @app.route('/recover')
     def recover():
-        return render_template('recover.html')
+        form = RecoveryForm()
+        return render_template('recover.html', form=form)
     
     @app.route('/register', methods = ['GET'])
     def register1():
@@ -276,6 +282,72 @@ def create_app(test_config=None):
         conn = database.get_db_connection()
         cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cursor.execute('DELETE FROM "user" WHERE id=%s', (uid,))
+
+    @app.route('/recover-user', methods=['POST'])
+    def recover_user():
+        if not csrf_handler(request):
+            return jsonify({'error': 'Invalid CSRF token'}), 400
+        data = request.json
+        print("Received data:", data)  # Debug-utskrift
+        if not data or 'username' not in data:
+            return jsonify({'error': 'Username is required'}), 400
+
+        username = data['username']
+
+        conn = database.get_db_connection()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor.execute('SELECT * FROM "user" WHERE username=%s', (username,))
+        user = cursor.fetchone()
+
+        if not user:
+            conn.close()
+            return jsonify({'error': 'User not found'}), 404
+        
+        session['p_recover'] = {'username': username}
+
+        conn.close()
+        return jsonify({'success': 'User found'}), 200
+
+    @app.route('/recover-mnemonic', methods=['POST'])
+    def recover_mnemonic():
+        if not csrf_handler(request):
+            return jsonify({'error': 'Invalid CSRF token'}), 400
+    
+        p_recover = session.get('p_recover')
+        data = request.json
+        
+        username = p_recover['username']
+
+        word1 = data['word1']
+        word2 = data['word2']
+        word3 = data['word3']
+        word4 = data['word4']
+        word5 = data['word5']
+        word6 = data['word6']
+        word7 = data['word7']
+        word8 = data['word8']
+        word9 = data['word9']
+        word10 = data['word10']
+        word11 = data['word11']
+        word12 = data['word12']
+        mnemonic = f"{word1} {word2} {word3} {word4} {word5} {word6} {word7} {word8} {word9} {word10} {word11} {word12}"
+
+        conn = database.get_db_connection()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor.execute('SELECT * FROM "user" WHERE username=%s', (username,))
+        user = cursor.fetchone()
+
+        if not verify_mnemonic(user['hash'], user['salt'], mnemonic):
+            conn.close()
+            return jsonify({'error': 'Wrong phrase'}), 404
+        conn.close()
+        return jsonify({'success': 'Mnemonic verified'}), 200
+
+
+
+    @app.route('/recover-challenge')
+    def recover_challenge():
+        return 0
         conn.commit()
         conn.close()
         session.clear()

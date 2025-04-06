@@ -15,57 +15,53 @@
     <div id="stage-1" class="module">
       <a href="/" class="back-link">&#8592;</a>
       <h2>Enter Username</h2>
-      <div class="form-field">
-        <input type="text" id="username" class="input-field" placeholder="Username" />
-      </div>
-      <p class="status-msg"></p>
-      <button class="button button-wizard" onclick="goToStage(2)">Next</button>
+      <form id="stage-1-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-field">
+          <input type="text" name="username" class="input-field" placeholder="Username" />
+        </div>
+      </form>
+      <p id="stage-1-error" class="status-msg"></p>
+      <button type="button" class="button button-wizard" onclick="goToStage(1, '/recover-user')">Next</button>
     </div>
 
     <!-- Stage 2 -->
     <div id="stage-2" class="module module-enlarged" style="display: none;">
       <a href="javascript:void(0)" class="back-link" onclick="goToStage(1)">&#8592;</a>
       <h2>Enter your 12-word Mnemonic</h2>
-      <div class="mnemonic-grid">
-        <!-- 12 Fields (no labels) -->
-        <div class="form-field"><input type="text" id="word1" class="input-field" placeholder="Word 1" /></div>
-        <div class="form-field"><input type="text" id="word2" class="input-field" placeholder="Word 2" /></div>
-        <div class="form-field"><input type="text" id="word3" class="input-field" placeholder="Word 3" /></div>
-        <div class="form-field"><input type="text" id="word4" class="input-field" placeholder="Word 4" /></div>
-        <div class="form-field"><input type="text" id="word5" class="input-field" placeholder="Word 5" /></div>
-        <div class="form-field"><input type="text" id="word6" class="input-field" placeholder="Word 6" /></div>
-        <div class="form-field"><input type="text" id="word7" class="input-field" placeholder="Word 7" /></div>
-        <div class="form-field"><input type="text" id="word8" class="input-field" placeholder="Word 8" /></div>
-        <div class="form-field"><input type="text" id="word9" class="input-field" placeholder="Word 9" /></div>
-        <div class="form-field"><input type="text" id="word10" class="input-field" placeholder="Word 10" /></div>
-        <div class="form-field"><input type="text" id="word11" class="input-field" placeholder="Word 11" /></div>
-        <div class="form-field"><input type="text" id="word12" class="input-field" placeholder="Word 12" /></div>
-      </div>
-      <p class="status-msg"></p>
-      <button class="button button-wizard" onclick="goToStage(3)">Next</button>
+      <form id="stage-2-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mnemonic-grid">
+          <!-- Add name attributes so they go into FormData -->
+          <div class="form-field"><input type="text" name="word1" class="input-field" placeholder="Word 1" /></div>
+          <div class="form-field"><input type="text" name="word2" class="input-field" placeholder="Word 2" /></div>
+          <div class="form-field"><input type="text" name="word3" class="input-field" placeholder="Word 3" /></div>
+          <div class="form-field"><input type="text" name="word4" class="input-field" placeholder="Word 4" /></div>
+          <div class="form-field"><input type="text" name="word5" class="input-field" placeholder="Word 5" /></div>
+          <div class="form-field"><input type="text" name="word6" class="input-field" placeholder="Word 6" /></div>
+          <div class="form-field"><input type="text" name="word7" class="input-field" placeholder="Word 7" /></div>
+          <div class="form-field"><input type="text" name="word8" class="input-field" placeholder="Word 8" /></div>
+          <div class="form-field"><input type="text" name="word9" class="input-field" placeholder="Word 9" /></div>
+          <div class="form-field"><input type="text" name="word10" class="input-field" placeholder="Word 10" /></div>
+          <div class="form-field"><input type="text" name="word11" class="input-field" placeholder="Word 11" /></div>
+          <div class="form-field"><input type="text" name="word12" class="input-field" placeholder="Word 12" /></div>
+        </div>
+      </form>
+      <p id="stage-2-error" class="status-msg"></p>
+      <button type="button" class="button button-wizard" onclick="goToStage(2, '/recover-mnemonic')">Next</button>
     </div>
 
     <!-- Stage 3 -->
     <div id="stage-3" class="module" style="display: none;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <a href="javascript:void(0)" class="back-link" onclick="goToStage(2)">&#8592;</a>
       <h2>Insert New Device</h2>
       <p class="title title-small">Please insert your new TKey device you want to use.</p>
-      <p class="status-msg"></p>
-      <button class="button button-wizard" onclick="verifyRecovery()">Verify</button>
+      <p id="stage-3-error" class="status-msg"></p>
+      <button type="button" class="button button-wizard" onclick="goToStage(3, '/recover-challenge')">Verify</button>
     </div>
-
-    <script>
-      function goToStage(stage) {
-        for (let i = 1; i <= 3; i++) {
-          document.getElementById(`stage-${i}`).style.display = "none";
-        }
-        document.getElementById(`stage-${stage}`).style.display = "flex";
-      }
-
-      function verifyRecovery() {
-        alert("Verification logic goes here.");
-      }
-    </script>
   </main>
+  <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 </body>
+
 </html>

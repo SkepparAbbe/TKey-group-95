@@ -80,7 +80,56 @@ async function register(event) {
     );
 }
 
-function authResponseBuilder(signatureData) {
+function goToStage(currentStage, route) {
+    const form = document.getElementById(`stage-${currentStage}-form`);
+    let bodyData = null;
+    let csrfToken = null;
+
+    if (form) {
+        const formData = new FormData(form);
+        bodyData = JSON.stringify(Object.fromEntries(formData.entries()));
+        csrfToken = formData.get('csrf_token');
+    }
+
+    fetch(route, {
+        method: 'POST',
+        body: bodyData,
+        headers: {
+            'Content-Type': 'application/json',
+            ... (csrfToken && {'X-CSRFToken': csrfToken})
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            const errorElem = document.getElementById(`stage-${currentStage}-error`);
+            if (errorElem) {
+                errorElem.innerText = data.error;
+            }
+        } else {
+            // Göm nuvarande steg
+            const currentStageElem = document.getElementById(`stage-${currentStage}`);
+            if (currentStageElem) {
+                currentStageElem.style.display = 'none';
+            }
+
+            // Visa nästa steg
+            const nextStageElem = document.getElementById(`stage-${currentStage + 1}`);
+            if (nextStageElem) {
+                nextStageElem.style.display = 'block';
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        const errorElem = document.getElementById(`stage-${currentStage}-error`);
+        if (errorElem) {
+            errorElem.innerText = "Something went wrong. Please try again.";
+        }
+    });
+}
+
+function authResponseBuilder(challengeData, signatureData) {
     const totp = document.getElementById("totp").value;
     return {
         signature: signatureData.signature,
