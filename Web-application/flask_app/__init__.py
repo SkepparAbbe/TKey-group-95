@@ -9,6 +9,8 @@ from .auth import load_logged_in_user, login_required, bp
 import psycopg2.extras
 from flask import Flask
 from flask import g, render_template, redirect, url_for, request, session, jsonify
+from flask_session import Session
+from redis.client import Redis
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, ValidationError
 from flask_wtf.csrf import CSRFProtect, validate_csrf
@@ -18,10 +20,14 @@ from .qrGen import generate_qr, verify_totp
 def create_app(test_config=None):
     # Create and configure the app
     app = Flask(__name__, instance_relative_config=True)
-    app.config.from_mapping(
-        SECRET_KEY=os.getenv("FLASK_SECRET_KEY"),
-        DATABASE=os.environ.get('DATABASE_URL')
-    )
+    app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
+    app.config['SESSION_TYPE'] = 'redis'
+    app.config['SESSION_REDIS'] = Redis(host='redis', port=6379)
+    #DATABASE=os.environ.get('DATABASE_URL')
+    app.config['SESSION_PERMANENT'] = False
+
+    Session(app)
+
 
     # Creates csrf protection object that forms from flask-wtf needs.
     csrf = CSRFProtect(app)
@@ -93,24 +99,19 @@ def create_app(test_config=None):
             jsonify({'error': 'Invalid CSRF token'}), 400
         data = request.json
         username = data['username']
-        session_id = str(uuid.uuid4())
         challenge = generate_challenge()
-        session[session_id] = {
-            'username': username,
-            'challenge': challenge
-        }
+        session['username'] = username
+        session['challenge'] = challenge
         return jsonify({
-            'session_id': session_id,
             'challenge': challenge
         }), 200
     
     @app.route('/verify', methods=['POST'])
     def auth():
         data = request.json
-        user_session = session.get(data['session_id'])
-        username = user_session['username']
-        challenge = user_session['challenge']
         signature = data['signature']
+        username = session.get('username')
+        challenge = session.get('challenge')
         db = database.get_db_connection()
         cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cursor.execute('SELECT * FROM "user" WHERE username=%s', (username,))
@@ -149,10 +150,9 @@ def create_app(test_config=None):
         if not csrf_handler(request):
             jsonify({'error': 'Invalid CSRF token'}), 400
         data = request.json
-        user_session = session.get(data['session_id'])
-        username = user_session['username']
-        challenge = user_session['challenge']
         signature = data['signature']
+        username = session.get('username')
+        challenge = session.get('challenge')
         public_key = data['publicKey']
         if validate(challenge, signature, public_key):
             conn = database.get_db_connection()
