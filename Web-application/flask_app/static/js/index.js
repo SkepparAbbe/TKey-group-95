@@ -5,7 +5,7 @@ const ContentType = {
 
 const statusMsg = document.querySelector(".status-msg");
 
-async function HandleAuthentication(event, formID, responseGenerator, signatureURL, responseUrlSuffix) {
+async function HandleAuthentication(event, formID, responseGenerator, signatureURL, responseUrlSuffix, url_extension) {
     event.preventDefault();
     const current_url = window.location.origin;
 
@@ -17,7 +17,7 @@ async function HandleAuthentication(event, formID, responseGenerator, signatureU
 
     const challenge = await requestData(
         contents,
-        current_url + "/challenge",
+        current_url + url_extension,
         ContentType.JSON,
         contents.csrf_token
     );
@@ -66,7 +66,8 @@ async function authenticate(event) {
         "login-form",
         authResponseBuilder,
         "http://localhost:8081/login",
-        "/verify"
+        "/verify",
+        "/challenge"
     );
 }
 
@@ -76,7 +77,19 @@ async function register(event) {
         "registration-form",
         registerResponseBuilder,
         "http://localhost:8081/registration",
-        "/register"
+        "/register",
+        "/challenge"
+    );
+}
+
+async function recover(event) {
+    HandleAuthentication(
+        event,
+        "recover-form",
+        recoverResponseBuilder,
+        "http://localhost:8081/registration",
+        "/recover-challenge",
+        "/recover-challenge-generate"
     );
 }
 
@@ -147,6 +160,14 @@ function authResponseBuilder(challengeData, signatureData) {
 
 function registerResponseBuilder(signatureData) {
     return {
+        signature: signatureData.signature,
+        publicKey: signatureData.publicKey
+    };
+}
+
+function recoverResponseBuilder(challengeData,signatureData){
+    return {
+        session_id: challengeData.session_id,
         signature: signatureData.signature,
         publicKey: signatureData.publicKey
     };

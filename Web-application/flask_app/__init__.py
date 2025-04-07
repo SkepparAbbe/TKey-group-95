@@ -99,7 +99,6 @@ def create_app(test_config=None):
     class RecoveryForm(FlaskForm):
         username = StringField('Username',validators=[DataRequired(message="Username is required")])
         submit = SubmitField('Recover')
-        
     
     @app.route('/challenge', methods=['POST'])
     def send_challenge():
@@ -195,6 +194,7 @@ def create_app(test_config=None):
             }), 200
         return jsonify({'error': 'Invalid credentials'}), 401
     
+    
     @app.route('/confirm-totp', methods=['POST'])
     def confirm_totp():
         if not csrf_handler(request):
@@ -260,6 +260,7 @@ def create_app(test_config=None):
         form = LoginForm()
         return render_template('login.html', form=form)
     
+    
     @app.route('/recover')
     def recover():
         form = RecoveryForm()
@@ -269,6 +270,7 @@ def create_app(test_config=None):
     def register1():
         form = RegisterForm()
         return render_template('register.html', form=form)
+    
 
     @app.route('/logout')
     def logout():
@@ -290,7 +292,7 @@ def create_app(test_config=None):
     @app.route('/recover-user', methods=['POST'])
     def recover_user():
         if not csrf_handler(request):
-            return jsonify({'error': 'Invalid CSRF token'}), 400
+            jsonify({'error': 'Invalid CSRF token'}), 400
         data = request.json
         print("Received data:", data)  # Debug-utskrift
         if not data or 'username' not in data:
@@ -340,7 +342,7 @@ def create_app(test_config=None):
         cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cursor.execute('SELECT * FROM "user" WHERE username=%s', (username,))
         user = cursor.fetchone()
-
+        
         if not verify_mnemonic(user['hash'], user['salt'], mnemonic):
             conn.close()
             return jsonify({'error': 'Wrong phrase'}), 404
@@ -348,14 +350,73 @@ def create_app(test_config=None):
         return jsonify({'success': 'Mnemonic verified'}), 200
 
 
+    @app.route('/recover-challenge-generate', methods=['POST'])
+    def recover_challenge_generate():
+        if not csrf_handler(request):
+            jsonify({'error': 'Invalid CSRF token'}), 400
 
-    @app.route('/recover-challenge')
+        #get from previous session username
+        p_recover = session.get('p_recover')
+        if not p_recover:
+            return jsonify({'error': 'Session expired'}), 400
+
+        session_id = str(uuid.uuid4())
+        challenge = generate_challenge()
+        session[session_id] = {
+            'username': p_recover['username'],
+            'challenge': challenge
+        }
+        return jsonify({
+            'session_id': session_id,
+            'challenge': challenge
+        }), 200
+
+    @app.route('/recover-challenge', methods=['POST'])
     def recover_challenge():
-        return 0
+        if not csrf_handler(request):
+            return jsonify({'error': 'Invalid CSRF token'}), 400
+    
+        p_recover = session.get('p_recover')  # Hämta direkt från sessionen
+        if not p_recover:
+            return jsonify({'error': 'Session expired'}), 400
+        
+        data = request.json
+        user_session = session.get(data['session_id'])
+        username = user_session['username']
+        challenge = user_session['challenge']
+        signature = data['signature']
+        public_key = data['publicKey']
+
+        username = user_session['username']
+        print(f"[DEBUG] Username from session: {username}")
+
+        challenge = user_session['challenge']
+        print(f"[DEBUG] Challenge from session: {challenge}")
+
+        signature = data['signature']
+        print(f"[DEBUG] Signature from request: {signature}")
+
+        public_key = data['publicKey']
+        print(f"[DEBUG] Public key from request: {public_key}")
+
+
+       
+        
+        if not validate(challenge, signature, public_key):
+            return jsonify({'error': 'Invalid credentials'}), 401
+        
+        # Uppdatera användarens public key
+        conn = database.get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('UPDATE "user" SET publickey = %s WHERE username = %s', (public_key,username))
         conn.commit()
         conn.close()
-        session.clear()
-        return redirect(url_for('index'))
+        
+        session.pop('p_recover', None)
+        return jsonify({
+                'success': 'Successfully registered',
+                'redirect_url': url_for('login')  # Or any other page you want to redirect to
+            }), 200
 
     @app.route('/home')
     @login_required
