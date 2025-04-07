@@ -168,6 +168,6 @@ async function requestData(message, url, contentType, csrf) {
         return { ok: response.ok, data: data };
     } catch (e) {
         // Assume error in proxy server
-        return { ok: false, data: { error: "Error communicating with the Tkey" } };
+        return { ok: false, data: { error: "Error communicating with the TKey" } };
     }
 }

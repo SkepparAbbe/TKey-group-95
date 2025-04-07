@@ -175,7 +175,7 @@ def create_app(test_config=None):
             pkey = cursor.fetchone()
 
             if pkey:
-                return jsonify({'error': 'User with TKey already exists'}), 401
+                return jsonify({'error': 'TKey already registered'}), 401
             
             img_str, secret = generate_qr(username) #generate qr code and secret
 
