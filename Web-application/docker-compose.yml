@@ -11,11 +11,18 @@ services:
     environment:
       - DATABASE_URL=postgresql://user:password@postgres:5432/db
       - FLASK_SECRET_KEY=dev
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
       - postgres
+      - redis
     volumes:
       - .:/flask_app  # Hot reload for code changes
 
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    
   postgres:
     image: postgres:latest
     container_name: database
