@@ -235,8 +235,6 @@ def create_app(test_config=None):
         if not p_data:
             return redirect(url_for('index'))
         
-        mnemonic = request.form.get('mnemonic')
-
         conn = database.get_db_connection()
         cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cursor.execute("""
@@ -363,48 +361,44 @@ def create_app(test_config=None):
     def recover_challenge():
         if not csrf_handler(request):
             return jsonify({'error': 'Invalid CSRF token'}), 400
-    
-        p_recover = session.get('p_recover')  # Hämta direkt från sessionen
+
+        p_recover = session.get('p_recover')  # Retrieve directly from session
         if not p_recover:
             return jsonify({'error': 'Session expired'}), 400
-        
+
         data = request.json
         user_session = session.get(data['session_id'])
+        if not user_session:
+            return jsonify({'error': 'Invalid session ID'}), 400
+
         username = user_session['username']
         challenge = user_session['challenge']
         signature = data['signature']
         public_key = data['publicKey']
 
-        username = user_session['username']
-        print(f"[DEBUG] Username from session: {username}")
-
-        challenge = user_session['challenge']
-        print(f"[DEBUG] Challenge from session: {challenge}")
-
-        signature = data['signature']
-        print(f"[DEBUG] Signature from request: {signature}")
-
-        public_key = data['publicKey']
-        print(f"[DEBUG] Public key from request: {public_key}")
-
-
-       
-        
         if not validate(challenge, signature, public_key):
             return jsonify({'error': 'Invalid credentials'}), 401
-        
-        # Uppdatera användarens public key
+
+        # Check if public key is already in use by another user
         conn = database.get_db_connection()
         cursor = conn.cursor()
-        cursor.execute('UPDATE "user" SET publickey = %s WHERE username = %s', (public_key,username))
+        cursor.execute('SELECT username FROM "user" WHERE publickey = %s AND username != %s', (public_key, username))
+        existing = cursor.fetchone()
+
+        if existing:
+            conn.close()
+            return jsonify({'error': 'This TKey is already in use by another account'}), 409  # 409 Conflict
+
+        # Update the user's public key
+        cursor.execute('UPDATE "user" SET publickey = %s WHERE username = %s', (public_key, username))
         conn.commit()
         conn.close()
-        
+
         session.pop('p_recover', None)
         return jsonify({
-                'success': 'Successfully registered',
-                'redirect_url': url_for('login')  # Or any other page you want to redirect to
-            }), 200
+            'success': 'Successfully registered',
+            'redirect_url': url_for('login')
+        }), 200
 
     @app.route('/home')
     @login_required

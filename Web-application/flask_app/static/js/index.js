@@ -3,11 +3,20 @@ const ContentType = {
     JSON: "application/json"
 };
 
-const statusMsg = document.querySelector(".status-msg");
+//const statusMsg = document.querySelector(".status-msg");
 
-async function HandleAuthentication(event, formID, responseGenerator, signatureURL, responseUrlSuffix, url_extension) {
+async function HandleAuthentication(event, formID, responseGenerator, signatureURL, responseUrlSuffix, url_extension,statusMsg,flagbool) {
     event.preventDefault();
     const current_url = window.location.origin;
+
+    if(flagbool==true){
+        statusMsg = document.querySelector(statusMsg);
+
+    }else{
+        statusMsg = document.getElementById(statusMsg);
+
+    }
+
 
     const formData = new FormData(document.getElementById(formID));
     const contents = {};
@@ -67,7 +76,10 @@ async function authenticate(event) {
         authResponseBuilder,
         "http://localhost:8081/login",
         "/verify",
-        "/challenge"
+        "/challenge",
+        ".status-msg",
+        true
+
     );
 }
 
@@ -78,19 +90,23 @@ async function register(event) {
         registerResponseBuilder,
         "http://localhost:8081/registration",
         "/register",
-        "/challenge"
+        "/challenge",
+        ".status-msg",
+        true
     );
 }
 
 async function recover(event) {
-    HandleAuthentication(
+    const response = await HandleAuthentication(
         event,
         "recover-form",
         recoverResponseBuilder,
         "http://localhost:8081/registration",
         "/recover-challenge",
-        "/recover-challenge-generate"
-    );
+        "/recover-challenge-generate",
+        'stage-3-error',
+        false
+    );        
 }
 
 function goToStage(currentStage, route) {
