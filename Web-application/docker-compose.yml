@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile.dev
     container_name: flask-app
     ports:
-      - "5000:5000"
+      - "8000:5000"
     environment:
       - DATABASE_URL=postgresql://user:password@postgres:5432/db
       - FLASK_SECRET_KEY=dev
@@ -37,4 +37,4 @@ services:
       - "5434:5432"  # Expose PostgreSQL to your local machine
 
 volumes:
-  postgres_data:
+  postgres_data: 

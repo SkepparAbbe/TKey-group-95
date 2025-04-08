@@ -12,10 +12,12 @@
 
 <body>
     <main>
-        <a id="back-button" href="{{ url_for('logout') }}">Logout</a>
-        <h1>Welcome {{user}}</h1>
-        <a id="del-user-button" href="{{ url_for('delete') }}">Delete user</a>
+        <div class="home-container">
+            <h1>Logged in as: {{ user }}</h1>
+            <a class="button button-grey" href="{{ url_for('logout') }}">Logout</a>
+            <a class="button button-red" href="{{ url_for('delete') }}">Delete user</a>
+        </div>
     </main>
 </body>
 
-</html>§8
+</html>
