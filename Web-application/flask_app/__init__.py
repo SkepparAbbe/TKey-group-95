@@ -307,7 +307,7 @@ def create_app(test_config=None):
             conn.close()
             return jsonify({'error': 'User not found'}), 404
         
-        session['p_recover'] = {'username': username}
+        session['p_recover'] = {'username': username, 'pass': False}
 
         conn.close()
         return jsonify({'success': 'User found'}), 200
@@ -333,6 +333,7 @@ def create_app(test_config=None):
             conn.close()
             return jsonify({'error': 'Wrong phrase'}), 404
         conn.close()
+        p_recover['pass'] = True
         return jsonify({'success': 'Mnemonic verified'}), 200
 
 
@@ -345,6 +346,9 @@ def create_app(test_config=None):
         p_recover = session.get('p_recover')
         if not p_recover:
             return jsonify({'error': 'Session expired'}), 400
+
+        if not p_recover['pass']:
+            return jsonify({'error': 'Mnemonic not verified'}), 400
 
         session_id = str(uuid.uuid4())
         challenge = generate_challenge()
