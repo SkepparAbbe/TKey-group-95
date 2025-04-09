@@ -397,7 +397,6 @@ def create_app(test_config=None):
         session.pop('p_recover', None)
         return jsonify({
             'success': 'Successfully registered',
-            'redirect_url': url_for('login')
         }), 200
 
     @app.route('/home')

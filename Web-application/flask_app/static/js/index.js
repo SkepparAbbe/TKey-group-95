@@ -5,18 +5,17 @@ const ContentType = {
 
 //const statusMsg = document.querySelector(".status-msg");
 
-async function HandleAuthentication(event, formID, responseGenerator, signatureURL, responseUrlSuffix, url_extension,statusMsg,flagbool) {
+async function HandleAuthentication(event, formID, responseGenerator, signatureURL, responseUrlSuffix, url_extension, statusMsg, flagbool) {
     event.preventDefault();
     const current_url = window.location.origin;
 
-    if(flagbool==true){
+    if (flagbool==true) {
         statusMsg = document.querySelector(statusMsg);
 
-    }else{
+    } else {
         statusMsg = document.getElementById(statusMsg);
 
     }
-
 
     const formData = new FormData(document.getElementById(formID));
     const contents = {};
@@ -57,6 +56,13 @@ async function HandleAuthentication(event, formID, responseGenerator, signatureU
     );
 
     if (response.ok && response.data.success) {
+        if (!flagbool) {
+            statusMsg.innerHTML = String("Success!");
+            statusMsg.classList.add("success-green");
+            setTimeout(() => {
+                window.location.href = current_url + "/login";
+            }, 3000);
+        }
         if(response.data.redirect_url){
             window.location.href = response.data.redirect_url;
         }
@@ -79,7 +85,6 @@ async function authenticate(event) {
         "/challenge",
         ".status-msg",
         true
-
     );
 }
 
@@ -106,7 +111,7 @@ async function recover(event) {
         "/recover-challenge-generate",
         'stage-3-error',
         false
-    );        
+    ); 
 }
 
 function goToStage(currentStage, route) {

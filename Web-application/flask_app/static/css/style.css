@@ -265,3 +265,7 @@ h2 {
     min-height: 2rem;
     margin-bottom: 1rem;
 }
+
+.success-green {
+    color: #49F865;
+}
