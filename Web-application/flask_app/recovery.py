@@ -26,23 +26,3 @@ def verify_mnemonic(stored_hash, salt, mnemonic):
     new_seed = convert_to_seed(mnemonic)
     new_hash = hashlib.pbkdf2_hmac('sha256', new_seed.encode(), bytes.fromhex(salt), iterations).hex()
     return stored_hash == new_hash
-
-
-'''
-if __name__ == "__main__":
-    nemonic = generate_mnemonic()   
-    print("Mnemonic Phrase: ", nemonic)
-
-    seed = convert_to_seed(nemonic)  
-    print("Seed Phrase: ", seed)
-    
-    hashed_seed, salt = hash_seed(seed)
-    print("Hashed Seed: ", hashed_seed)
-    print("Salt: ", salt)
-    
-    input_mnemonic = input("Enter the mnemonic phrase to verify: ")
-    if verify_mnemonic(hashed_seed, salt, input_mnemonic):
-        print("Mnemonic verified successfully!")
-    else:
-        print("Mnemonic verification failed.")
-'''

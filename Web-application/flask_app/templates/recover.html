@@ -32,7 +32,6 @@
       <form id="stage-2-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="mnemonic-grid">
-          <!-- Add name attributes so they go into FormData -->
           <div class="form-field"><input type="text" name="word1" class="input-field" placeholder="Word 1" autocomplete="off" required/></div>
           <div class="form-field"><input type="text" name="word2" class="input-field" placeholder="Word 2" autocomplete="off" required/></div>
           <div class="form-field"><input type="text" name="word3" class="input-field" placeholder="Word 3" autocomplete="off" required/></div>
@@ -69,7 +68,7 @@
       // Stage 1 Enter handler
       const stage1Form = document.getElementById('stage-1-form');
       stage1Form.addEventListener('submit', function (e) {
-        e.preventDefault(); // förhindra vanlig form submission
+        e.preventDefault();
         goToStage(1, '/recover-user');
       });
   
@@ -80,15 +79,15 @@
         goToStage(2, '/recover-mnemonic');
       });
   
-      // Trigga submit när användaren trycker Enter i Stage 1
+      // Trigger submit on Enter in Stage 1
       stage1Form.querySelector('input[name="username"]').addEventListener('keydown', function (e) {
         if (e.key === 'Enter') {
           e.preventDefault();
-          stage1Form.requestSubmit(); // trigg submission
+          stage1Form.requestSubmit();
         }
       });
   
-      // Trigga submit på Enter i någon av de 12 inputs i Stage 2
+      // Trigger submit on Enter in Stage 2
       const mnemonicInputs = stage2Form.querySelectorAll('input');
       mnemonicInputs.forEach(input => {
         input.addEventListener('keydown', function (e) {
