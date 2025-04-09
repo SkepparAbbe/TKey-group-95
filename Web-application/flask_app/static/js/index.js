@@ -47,7 +47,7 @@ async function HandleAuthentication(event, formID, responseGenerator, signatureU
         return;
     }
 
-    const responseDict = responseGenerator(signature.data);
+    const responseDict = responseGenerator(challenge.data, signature.data);
 
     const response = await requestData(
         responseDict, 
@@ -169,13 +169,15 @@ function goToStage(currentStage, route) {
 function authResponseBuilder(challengeData, signatureData) {
     const totp = document.getElementById("totp").value;
     return {
+        session_id: challengeData.session_id,
         signature: signatureData.signature,
         totp: totp
     };
 }
 
-function registerResponseBuilder(signatureData) {
+function registerResponseBuilder(challengeData, signatureData) {
     return {
+        session_id: challengeData.session_id,
         signature: signatureData.signature,
         publicKey: signatureData.publicKey
     };
