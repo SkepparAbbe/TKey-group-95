@@ -197,6 +197,7 @@ h2 {
     margin-left: 30px;
     margin-right: 30px;
     text-align: center;
+    margin-bottom: 0px;
 }
 
 .qr-code {
@@ -258,4 +259,9 @@ h2 {
     font-weight: bold;
     word-break: break-word;
     font-size: 1.2rem; 
+}
+
+.two-tall {
+    min-height: 2rem;
+    margin-bottom: 1rem;
 }
