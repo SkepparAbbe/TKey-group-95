@@ -18,7 +18,7 @@
                 {{ form.hidden_tag() }}
                 <div class="form-field">
                     {{ form.username.label }}
-                    {{ form.username(class_="input-field") }}
+                    {{ form.username(class_="input-field", autocomplete="off") }}
                 </div>
                 <div class="form-field">
                     {{ form.submit() }}

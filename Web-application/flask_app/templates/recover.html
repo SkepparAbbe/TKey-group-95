@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recover account</title>
+
+    <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}">
+</head>
+
+<body>
+  <main>
+    <!-- Stage 1 -->
+    <div id="stage-1" class="module module-wizard active">
+      <a href="/" class="back-link">&#8592;</a>
+      <h2>Enter Username</h2>
+      <form id="stage-1-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-field">
+          <input type="text" name="username" class="input-field" placeholder="Username" autocomplete="off" required/>
+        </div>
+      </form>
+      <p id="stage-1-error" class="status-msg"></p>
+      <button type="button" class="button button-wizard" onclick="goToStage(1, '/recover-user')">Next</button>
+    </div>
+
+    <!-- Stage 2 -->
+    <div id="stage-2" class="module module-enlarged module-wizard">
+      <a href="/" class="back-link">&#8592;</a>
+      <h2>Enter your 12-word Mnemonic</h2>
+      <form id="stage-2-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mnemonic-grid">
+          <div class="form-field"><input type="text" name="word1" class="input-field" placeholder="Word 1" autocomplete="off" required/></div>
+          <div class="form-field"><input type="text" name="word2" class="input-field" placeholder="Word 2" autocomplete="off" required/></div>
+          <div class="form-field"><input type="text" name="word3" class="input-field" placeholder="Word 3" autocomplete="off" required/></div>
+          <div class="form-field"><input type="text" name="word4" class="input-field" placeholder="Word 4" autocomplete="off" required/></div>
+          <div class="form-field"><input type="text" name="word5" class="input-field" placeholder="Word 5" autocomplete="off" required/></div>
+          <div class="form-field"><input type="text" name="word6" class="input-field" placeholder="Word 6" autocomplete="off" required/></div>
+          <div class="form-field"><input type="text" name="word7" class="input-field" placeholder="Word 7" autocomplete="off" required/></div>
+          <div class="form-field"><input type="text" name="word8" class="input-field" placeholder="Word 8" autocomplete="off" required/></div>
+          <div class="form-field"><input type="text" name="word9" class="input-field" placeholder="Word 9" autocomplete="off" required/></div>
+          <div class="form-field"><input type="text" name="word10" class="input-field" placeholder="Word 10" autocomplete="off" required/></div>
+          <div class="form-field"><input type="text" name="word11" class="input-field" placeholder="Word 11" autocomplete="off" required/></div>
+          <div class="form-field"><input type="text" name="word12" class="input-field" placeholder="Word 12" autocomplete="off" required/></div>
+        </div>
+      </form>
+      <p id="stage-2-error" class="status-msg"></p>
+      <button type="button" class="button button-wizard" onclick="goToStage(2, '/recover-mnemonic')">Next</button>
+    </div>
+
+    <!-- Stage 3 -->
+    <div id="stage-3" class="module module-wizard">
+      <form id = "recover-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      </form>
+      <a href="/" class="back-link">&#8592;</a>
+      <h2>Insert New Device</h2>
+      <p class="title title-small">Please insert your new TKey device you want to use.</p>
+      <p id="stage-3-error" class="status-msg two-tall"></p>
+      <button type="button" class="button button-wizard" onclick="recover(event)">Verify</button>
+    </div>
+  </main>
+  <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Stage 1 Enter handler
+      const stage1Form = document.getElementById('stage-1-form');
+      stage1Form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        goToStage(1, '/recover-user');
+      });
+  
+      // Stage 2 Enter handler
+      const stage2Form = document.getElementById('stage-2-form');
+      stage2Form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        goToStage(2, '/recover-mnemonic');
+      });
+  
+      // Trigger submit on Enter in Stage 1
+      stage1Form.querySelector('input[name="username"]').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          stage1Form.requestSubmit();
+        }
+      });
+  
+      // Trigger submit on Enter in Stage 2
+      const mnemonicInputs = stage2Form.querySelectorAll('input');
+      mnemonicInputs.forEach(input => {
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            stage2Form.requestSubmit();
+          }
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>

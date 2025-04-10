@@ -16,6 +16,7 @@ from wtforms import StringField, SubmitField, ValidationError
 from flask_wtf.csrf import CSRFProtect, validate_csrf
 from wtforms.validators import DataRequired
 
+from .recovery import generate_mnemonic, convert_to_seed, hash_seed, verify_mnemonic
 
 from .qrGen import generate_qr, verify_totp 
 
@@ -95,6 +96,10 @@ def create_app(test_config=None):
         username = StringField('Username',validators=[DataRequired(message="Username is required")])
         submit = SubmitField('Register')
     
+    class RecoveryForm(FlaskForm):
+        username = StringField('Username',validators=[DataRequired(message="Username is required")])
+        submit = SubmitField('Recover')
+    
     @app.route('/challenge', methods=['POST'])
     def send_challenge():
         if not csrf_handler(request):
@@ -161,15 +166,26 @@ def create_app(test_config=None):
             cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             cursor.execute('SELECT * FROM "user" WHERE username=%s', (username,))
             user = cursor.fetchone()
+            
             if user:
                 return jsonify({'error': 'User already exists'}), 401
+
+            cursor.execute('SELECT * FROM "user" WHERE publickey=%s', (public_key,))
+            pkey = cursor.fetchone()
+
+            if pkey:
+                return jsonify({'error': 'TKey already registered'}), 401
+            
             img_str, secret = generate_qr(username) #generate qr code and secret
 
             session['p_register'] = {
                 'username': username,
                 'public_key': public_key,
                 'secret': secret,
-                'qr_code': img_str
+                'qr_code': img_str,
+                'mnemonic' : None,
+                'salt' : None,
+                'hash' : None,
             }
             conn.close()
             return jsonify({
@@ -177,6 +193,7 @@ def create_app(test_config=None):
                 'redirect_url': url_for('show_qr')  # Or any other page you want to redirect to
             }), 200
         return jsonify({'error': 'Invalid credentials'}), 401
+    
     
     @app.route('/confirm-totp', methods=['POST'])
     def confirm_totp():
@@ -187,34 +204,71 @@ def create_app(test_config=None):
             return redirect(url_for('index'))
         totp_code = request.form.get('totp')
         if verify_totp(p_data['secret'], totp_code):
-            conn = database.get_db_connection()
-            cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-            cursor.execute("""
-                        INSERT INTO "user" (username, publickey,secret)
-                        VALUES (%s, %s,%s)""", (p_data['username'], p_data['public_key'], p_data['secret']))
-            conn.commit()
-            conn.close()
-            session.pop('p_register', None)
-            return redirect(url_for('login'))
+            mnemonic = generate_mnemonic()
+            hash_, salt = hash_seed(convert_to_seed(mnemonic))
+            
+            p_data['mnemonic'] = mnemonic
+            p_data['salt'] = salt
+            p_data['hash'] = hash_
+            session['p_register'] = p_data
+
+            return redirect(url_for('show_mnemonic'))
         else:
             return render_template('register_qr.html', qr_code=p_data['qr_code'], error='Invalid TOTP code')
+
+    @app.route('/show-mnemonic')
+    def show_mnemonic():
+        p_data = session.get('p_register')
+        if not p_data:
+            return redirect(url_for('index'))
+        
+        # Splits the string to a list of words
+        mnemonic_words = p_data.get('mnemonic').split()  # Splits based on blank line
+        
+        return render_template('register_mnemonic.html', mnemonic_words=mnemonic_words, error=None)
+
+    @app.route('/finalize-account', methods=['POST'])
+    def finalize_account():
+        if not csrf_handler(request):
+            jsonify({'error': 'Invalid CSRF token'}), 400
+        p_data = session.get('p_register')
+        if not p_data:
+            return redirect(url_for('index'))
+        
+        conn = database.get_db_connection()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor.execute("""
+            INSERT INTO "user" (username, publickey, secret, salt, hash)
+            VALUES (%s, %s, %s, %s, %s)""", (p_data['username'], p_data['public_key'], p_data['secret'], p_data['salt'], p_data['hash']))
+        conn.commit()
+        conn.close() 
+        session.pop('p_register', None)
+        return redirect(url_for('login'))
 
     @app.route('/show-qr')
     def show_qr():
         p_data = session.get('p_register')
         if not p_data:
             return redirect(url_for('index'))
-        return render_template('register_qr.html', qr_code=p_data['qr_code'])
+        qr_code = p_data.pop('qr_code',None) # Remove?
+        return render_template('register_qr.html', qr_code=qr_code, error=None)
 
     @app.route('/login', methods = ['GET'])
     def login():
         form = LoginForm()
         return render_template('login.html', form=form)
     
+    
+    @app.route('/recover')
+    def recover():
+        form = RecoveryForm()
+        return render_template('recover.html', form=form)
+    
     @app.route('/register', methods = ['GET'])
     def register1():
         form = RegisterForm()
         return render_template('register.html', form=form)
+    
 
     @app.route('/logout')
     def logout():
@@ -232,6 +286,122 @@ def create_app(test_config=None):
         conn.close()
         session.clear()
         return redirect(url_for('index'))
+
+    @app.route('/recover-user', methods=['POST'])
+    def recover_user():
+        if not csrf_handler(request):
+            jsonify({'error': 'Invalid CSRF token'}), 400
+        data = request.json
+        print("Received data:", data)  # Debug-utskrift
+        if not data or 'username' not in data:
+            return jsonify({'error': 'Username is required'}), 400
+
+        username = data['username']
+
+        conn = database.get_db_connection()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor.execute('SELECT * FROM "user" WHERE username=%s', (username,))
+        user = cursor.fetchone()
+
+        if not user:
+            conn.close()
+            return jsonify({'error': 'User not found'}), 404
+        
+        session['p_recover'] = {'username': username, 'pass': False}
+
+        conn.close()
+        return jsonify({'success': 'User found'}), 200
+
+    @app.route('/recover-mnemonic', methods=['POST'])
+    def recover_mnemonic():
+        if not csrf_handler(request):
+            return jsonify({'error': 'Invalid CSRF token'}), 400
+    
+        p_recover = session.get('p_recover')
+        data = request.json
+        
+        username = p_recover['username']
+
+        mnemonic = " ".join(data[f"word{i}"] for i in range(1, 13))
+
+        conn = database.get_db_connection()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor.execute('SELECT * FROM "user" WHERE username=%s', (username,))
+        user = cursor.fetchone()
+        
+        if not verify_mnemonic(user['hash'], user['salt'], mnemonic):
+            conn.close()
+            return jsonify({'error': 'Wrong phrase'}), 404
+        conn.close()
+        p_recover['pass'] = True
+        return jsonify({'success': 'Mnemonic verified'}), 200
+
+
+    @app.route('/recover-challenge-generate', methods=['POST'])
+    def recover_challenge_generate():
+        if not csrf_handler(request):
+            jsonify({'error': 'Invalid CSRF token'}), 400
+
+        #get from previous session username
+        p_recover = session.get('p_recover')
+        if not p_recover:
+            return jsonify({'error': 'Session expired'}), 400
+
+        if not p_recover['pass']:
+            return jsonify({'error': 'Mnemonic not verified'}), 400
+
+        session_id = str(uuid.uuid4())
+        challenge = generate_challenge()
+        session[session_id] = {
+            'username': p_recover['username'],
+            'challenge': challenge
+        }
+        return jsonify({
+            'session_id': session_id,
+            'challenge': challenge
+        }), 200
+
+    @app.route('/recover-challenge', methods=['POST'])
+    def recover_challenge():
+        if not csrf_handler(request):
+            return jsonify({'error': 'Invalid CSRF token'}), 400
+
+        p_recover = session.get('p_recover')  # Retrieve directly from session
+        if not p_recover:
+            return jsonify({'error': 'Session expired'}), 400
+
+        data = request.json
+        user_session = session.get(data['session_id'])
+        if not user_session:
+            return jsonify({'error': 'Invalid session ID'}), 400
+
+        username = user_session['username']
+        challenge = user_session['challenge']
+        signature = data['signature']
+        public_key = data['publicKey']
+
+        if not validate(challenge, signature, public_key):
+            return jsonify({'error': 'Invalid credentials'}), 401
+
+        # Check if public key is already in use by another user
+        conn = database.get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT username FROM "user" WHERE publickey = %s AND username != %s', (public_key, username))
+        existing = cursor.fetchone()
+
+        if existing:
+            conn.close()
+            return jsonify({'error': 'This TKey is already in use by another account'}), 409  # 409 Conflict
+
+        # Update the user's public key
+        cursor.execute('UPDATE "user" SET publickey = %s WHERE username = %s', (public_key, username))
+        conn.commit()
+        conn.close()
+
+        session.pop('p_recover', None)
+        return jsonify({
+            'success': 'Successfully registered',
+        }), 200
 
     @app.route('/home')
     @login_required

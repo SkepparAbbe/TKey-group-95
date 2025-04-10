@@ -9,3 +9,4 @@ click==8.1.7
 pyotp==2.8.0
 qrcode==7.3.1
 pillow==10.0.0
+mnemonic==0.21
