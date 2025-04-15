@@ -19,12 +19,12 @@
             
                 <div class="form-field">
                     {{ form.username.label }}
-                    {{ form.username(class_="input-field") }}
+                    {{ form.username(class_="input-field", autocomplete="off") }}
                 </div>
             
                 <div class="form-field">
                     {{ form.totp.label }}
-                    {{ form.totp(class_="input-field") }}
+                    {{ form.totp(class_="input-field", autocomplete="off") }}
                 </div>
             
                 <div class="form-field">
@@ -32,6 +32,7 @@
                 </div>
             </form>
             <p class="status-msg"></p>
+            <a class="redirect-link" href="{{ url_for('recover') }}">Recover My Account</a>
         </div>
     </main>
     <script src="{{url_for('static', filename='js/index.js')}}"></script>

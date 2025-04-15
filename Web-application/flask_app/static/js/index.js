@@ -3,11 +3,19 @@ const ContentType = {
     JSON: "application/json"
 };
 
-const statusMsg = document.querySelector(".status-msg");
+//const statusMsg = document.querySelector(".status-msg");
 
-async function HandleAuthentication(event, formID, responseGenerator, signatureURL, responseUrlSuffix) {
+async function HandleAuthentication(event, formID, responseGenerator, signatureURL, responseUrlSuffix, url_extension, statusMsg, flagbool) {
     event.preventDefault();
     const current_url = window.location.origin;
+
+    if (flagbool==true) {
+        statusMsg = document.querySelector(statusMsg);
+
+    } else {
+        statusMsg = document.getElementById(statusMsg);
+
+    }
 
     const formData = new FormData(document.getElementById(formID));
     const contents = {};
@@ -17,7 +25,7 @@ async function HandleAuthentication(event, formID, responseGenerator, signatureU
 
     const challenge = await requestData(
         contents,
-        current_url + "/challenge",
+        current_url + url_extension,
         ContentType.JSON,
         contents.csrf_token
     );
@@ -38,7 +46,7 @@ async function HandleAuthentication(event, formID, responseGenerator, signatureU
         return;
     }
 
-    const responseDict = responseGenerator(signature.data);
+    const responseDict = responseGenerator(challenge.data, signature.data);
 
     const response = await requestData(
         responseDict, 
@@ -48,6 +56,13 @@ async function HandleAuthentication(event, formID, responseGenerator, signatureU
     );
 
     if (response.ok && response.data.success) {
+        if (!flagbool) {
+            statusMsg.innerHTML = String("Success!");
+            statusMsg.classList.add("success-green");
+            setTimeout(() => {
+                window.location.href = current_url + "/login";
+            }, 3000);
+        }
         if(response.data.redirect_url){
             window.location.href = response.data.redirect_url;
         }
@@ -66,7 +81,10 @@ async function authenticate(event) {
         "login-form",
         authResponseBuilder,
         "http://localhost:8081/login",
-        "/verify"
+        "/verify",
+        "/challenge",
+        ".status-msg",
+        true
     );
 }
 
@@ -76,20 +94,103 @@ async function register(event) {
         "registration-form",
         registerResponseBuilder,
         "http://localhost:8081/registration",
-        "/register"
+        "/register",
+        "/challenge",
+        ".status-msg",
+        true
     );
 }
 
-function authResponseBuilder(signatureData) {
+async function recover(event) {
+    const response = await HandleAuthentication(
+        event,
+        "recover-form",
+        recoverResponseBuilder,
+        "http://localhost:8081/registration",
+        "/recover-challenge",
+        "/recover-challenge-generate",
+        'stage-3-error',
+        false
+    ); 
+}
+
+function goToStage(currentStage, route) {
+    const form = document.getElementById(`stage-${currentStage}-form`);
+    let bodyData = null;
+    let csrfToken = null;
+
+    if (form) {
+        const formData = new FormData(form);
+        bodyData = JSON.stringify(Object.fromEntries(formData.entries()));
+        csrfToken = formData.get('csrf_token');
+    }
+
+    fetch(route, {
+        method: 'POST',
+        body: bodyData,
+        headers: {
+            'Content-Type': 'application/json',
+            ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {})
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const errorElem = document.getElementById(`stage-${currentStage}-error`);
+        
+        if (data.error) {
+            if (errorElem) {
+                errorElem.innerText = data.error;
+            }
+            return;
+        }
+
+        // Hide current stage
+        const currentStageElem = document.getElementById(`stage-${currentStage}`);
+        if (currentStageElem) {
+            currentStageElem.classList.remove('active');
+        }
+
+        // Show next stage
+        const nextStageElem = document.getElementById(`stage-${currentStage + 1}`);
+        if (nextStageElem) {
+            nextStageElem.classList.add('active');
+        }
+
+        // Clear previous errors
+        if (errorElem) {
+            errorElem.innerText = '';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        const errorElem = document.getElementById(`stage-${currentStage}-error`);
+        if (errorElem) {
+            errorElem.innerText = "Something went wrong. Please try again.";
+        }
+    });
+}
+
+
+function authResponseBuilder(challengeData, signatureData) {
     const totp = document.getElementById("totp").value;
     return {
+        session_id: challengeData.session_id,
         signature: signatureData.signature,
         totp: totp
     };
 }
 
-function registerResponseBuilder(signatureData) {
+function registerResponseBuilder(challengeData, signatureData) {
     return {
+        session_id: challengeData.session_id,
+        signature: signatureData.signature,
+        publicKey: signatureData.publicKey
+    };
+}
+
+function recoverResponseBuilder(challengeData,signatureData){
+    return {
+        session_id: challengeData.session_id,
         signature: signatureData.signature,
         publicKey: signatureData.publicKey
     };
@@ -111,6 +212,6 @@ async function requestData(message, url, contentType, csrf) {
         return { ok: response.ok, data: data };
     } catch (e) {
         // Assume error in proxy server
-        return { ok: false, data: { error: "Error communicating with the Tkey" } };
+        return { ok: false, data: { error: "Error communicating with the TKey" } };
     }
 }

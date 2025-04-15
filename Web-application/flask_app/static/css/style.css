@@ -27,12 +27,12 @@ main {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);  /* Centers the container */
+    transform: translate(-50%, -50%);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;  /* Optional: for rounded corners */
+    border-radius: 8px; 
 }
 
 .module-enlarged {
@@ -40,10 +40,18 @@ main {
     width: 500px;
 }
 
+.module-wizard {
+    display: none;
+}
+
+.module-wizard.active {
+    display: flex;
+}
+
 h2 {
     color: #C9D1D9;
-    font-size: 24px; /* Adjust as needed */
-    margin-bottom: 20px; /* Add space between the heading and the form */
+    font-size: 24px;
+    margin-bottom: 20px;
 }
 
 .form-field {
@@ -53,7 +61,7 @@ h2 {
 }
 
 .form-field label {
-    color: #C9D1D9; /* light text on dark bg */
+    color: #C9D1D9;
     font-size: 14px;
     margin-bottom: 6px;
 }
@@ -71,7 +79,7 @@ h2 {
 .form-field input:focus {
     outline: none;
     border-color: #1F6FEB;
-    box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.2); /* subtle glow */
+    box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.2);
 }
 
 .input-field {
@@ -92,7 +100,7 @@ h2 {
     text-align: center;
     color: #F85149;
     font-weight: bold;
-    margin-top: 10px; /* Add spacing from the form */
+    margin: 10px;
     height: 20px; /* Set a fixed height for the message area */
     line-height: 20px; /* Center the text vertically */
 }
@@ -104,7 +112,7 @@ h2 {
     border: none;
     cursor: pointer;
     transition: background-color 0.3s ease;
-    text-decoration: none; /* removes underline */
+    text-decoration: none; /* Removes underline */
     width: 200px;
     height: 100px;
     display: flex;
@@ -118,6 +126,13 @@ h2 {
 .button:hover {
     background-color: #388BFD;
   }
+
+.button-wizard {
+    width: 100px;
+    height: 50px;
+    padding: 0px 0px;
+    font-size: 1rem;
+}
 
 .button-grey {
     background-color: #6E6E6E;
@@ -140,12 +155,12 @@ h2 {
     padding: 20px;
     border-radius: 8px;
     display: flex;
-    flex-direction: column;  /* Default vertical layout */
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 20px;  /* Space between the elements */
     text-align: center;
-    width: 300px;  /* Set a fixed width for the container */
+    width: 300px; 
     margin: 0 auto;  /* Centers the container horizontally */
 }
 
@@ -177,8 +192,80 @@ h2 {
     text-align: center;
 }
 
+.title-small {
+    font-size: 16px;
+    margin-left: 30px;
+    margin-right: 30px;
+    text-align: center;
+    margin-bottom: 0px;
+}
+
 .qr-code {
     display: block;
     margin: 20px auto;
     width: 200px; 
+}
+
+.redirect-link {
+    color: #58A6FF;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.redirect-link:hover {
+    color: #1F6FEB;
+    text-decoration: underline;
+}
+
+/* recover.html */
+.mnemonic-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 24px; /* row gap, column gap */
+    max-width: 100%;
+    padding: 0 20px;
+}
+
+/* register_mnemonic.html */
+.mnemonic-box {
+    background-color: #0D1117;
+    color: #FFFFFF;
+    padding: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    font-size: 18px;
+    word-wrap: break-word;
+    text-align: center; 
+}
+
+/* register_mnemonic.html */
+.mnemonic-phrase {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Space between the phrases */
+}
+
+/* register_mnemonic.html */
+.mnemonic-row {
+    display: flex;
+    justify-content: center; 
+    gap: 10px; /* Space between the words */
+    align-items: center; 
+}
+
+/* register_mnemonic.html */
+.mnemonic-row span {
+    display: inline-block;
+    font-weight: bold;
+    word-break: break-word;
+    font-size: 1.2rem; 
+}
+
+.two-tall {
+    min-height: 2rem;
+    margin-bottom: 1rem;
+}
+
+.success-green {
+    color: #49F865;
 }
