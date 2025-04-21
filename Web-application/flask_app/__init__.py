@@ -10,6 +10,8 @@ import psycopg2.extras
 from flask import Flask
 from flask import g, render_template, redirect, url_for, request, session, jsonify
 from flask_session import Session
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from redis.client import Redis
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, ValidationError
@@ -22,16 +24,37 @@ from .qrGen import generate_qr, verify_totp
 
 def create_app(test_config=None):
     # Create and configure the app
+    redis_client = Redis(host='redis', port=6379)
     app = Flask(__name__, instance_relative_config=True)
+    app.config['RATELIMIT_ENABLED'] = True
     app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
     app.config['SESSION_TYPE'] = 'redis'
-    app.config['SESSION_REDIS'] = Redis(host='redis', port=6379)
-    #DATABASE=os.environ.get('DATABASE_URL')
+    app.config['SESSION_REDIS'] = redis_client
     app.config['SESSION_PERMANENT'] = False
 
     Session(app)
 
+    limiter = Limiter(
+        key_func = get_remote_address,
+        app = app,
+        storage_uri="redis://redis:6379",
+        storage_options={"socket_connect_timeout": 30},
+        default_limits = []
+    )
 
+    def ip_and_account():
+        ip = get_remote_address()
+        account = session.get('p_recover')["username"]
+        return f"{ip}:{account}"
+    
+    def requested_user():
+        user = session.get('p_recover')['username']
+        return f"{user}"
+    
+    def ip_and_account2():
+        ip = get_remote_address()
+        account = session.get('username')
+        return f"{ip}:{account}"
 
     # Creates csrf protection object that forms from flask-wtf needs.
     csrf = CSRFProtect(app)
@@ -103,7 +126,7 @@ def create_app(test_config=None):
     @app.route('/challenge', methods=['POST'])
     def send_challenge():
         if not csrf_handler(request):
-            jsonify({'error': 'Invalid CSRF token'}), 400
+            return jsonify({'error': 'Invalid CSRF token'}), 400
         data = request.json
         username = data['username']
         challenge = generate_challenge()
@@ -114,6 +137,7 @@ def create_app(test_config=None):
         }), 200
     
     @app.route('/verify', methods=['POST'])
+    @limiter.limit("5 per minute", key_func=ip_and_account2)
     def auth():
         data = request.json
         signature = data['signature']
@@ -250,7 +274,7 @@ def create_app(test_config=None):
         p_data = session.get('p_register')
         if not p_data:
             return redirect(url_for('index'))
-        qr_code = p_data.pop('qr_code',None) # Remove?
+        qr_code = p_data.get('qr_code',None)
         return render_template('register_qr.html', qr_code=qr_code, error=None)
 
     @app.route('/login', methods = ['GET'])
@@ -292,7 +316,6 @@ def create_app(test_config=None):
         if not csrf_handler(request):
             jsonify({'error': 'Invalid CSRF token'}), 400
         data = request.json
-        print("Received data:", data)  # Debug-utskrift
         if not data or 'username' not in data:
             return jsonify({'error': 'Username is required'}), 400
 
@@ -313,6 +336,8 @@ def create_app(test_config=None):
         return jsonify({'success': 'User found'}), 200
 
     @app.route('/recover-mnemonic', methods=['POST'])
+    @limiter.limit("5 per minute", key_func=ip_and_account)
+    @limiter.limit("20 per day", key_func=requested_user)
     def recover_mnemonic():
         if not csrf_handler(request):
             return jsonify({'error': 'Invalid CSRF token'}), 400

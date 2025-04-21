@@ -11,10 +11,8 @@ async function HandleAuthentication(event, formID, responseGenerator, signatureU
 
     if (flagbool==true) {
         statusMsg = document.querySelector(statusMsg);
-
     } else {
         statusMsg = document.getElementById(statusMsg);
-
     }
 
     const formData = new FormData(document.getElementById(formID));
@@ -202,7 +200,6 @@ async function requestData(message, url, contentType, csrf) {
             "Content-Type": contentType,
             ... (csrf && {'X-CSRFToken': csrf})
         };
-        console.log(headers)
 		const response = await fetch(url, {
 			method: "POST",
             headers: headers,

@@ -7,5 +7,4 @@ CREATE TABLE "user" (
     secret TEXT NOT NULL,
     salt TEXT NOT NULL,
     hash TEXT NOT NULL
-
 );
