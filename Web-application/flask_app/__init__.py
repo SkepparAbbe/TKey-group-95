@@ -101,11 +101,6 @@ def create_app(test_config=None):
 
         return response
 
-    # a simple page that says hello
-    @app.route('/hello')
-    def hello():
-        return 'Hello world!' 
-
     @app.route('/')
     def index():
         return render_template('index.html')
@@ -337,7 +332,6 @@ def create_app(test_config=None):
 
     @app.route('/recover-mnemonic', methods=['POST'])
     @limiter.limit("5 per minute", key_func=ip_and_account)
-    @limiter.limit("20 per day", key_func=requested_user)
     def recover_mnemonic():
         if not csrf_handler(request):
             return jsonify({'error': 'Invalid CSRF token'}), 400

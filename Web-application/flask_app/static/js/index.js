@@ -200,6 +200,7 @@ async function requestData(message, url, contentType, csrf) {
             "Content-Type": contentType,
             ... (csrf && {'X-CSRFToken': csrf})
         };
+        console.log(headers);
 		const response = await fetch(url, {
 			method: "POST",
             headers: headers,
