@@ -108,7 +108,7 @@ async function recover(event) {
         recoverResponseBuilder,
         "http://localhost:8081/registration",
         "/recover-challenge",
-        "/recover-challenge-generate",
+        "/challenge",
         'stage-3-error',
         false
     ); 
