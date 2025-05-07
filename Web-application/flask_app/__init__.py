@@ -55,6 +55,10 @@ def create_app(test_config=None):
     class RegisterForm(FlaskForm):
         username = StringField('Username',validators=[DataRequired(message="Username is required")])
         submit = SubmitField('Register')
+
+    class TOTPForm(FlaskForm):
+        totp = StringField('TOTP',validators=[DataRequired(message="TOTP is required")])
+        submit = SubmitField('Verify')
     
     class RecoveryForm(FlaskForm):
         username = StringField('Username',validators=[DataRequired(message="Username is required")])
@@ -70,7 +74,10 @@ def create_app(test_config=None):
         return verify(msg, sig, key)
 
     def csrf_handler(request):
-        csrf_token = request.headers.get('X-CSRFToken')
+        if request.is_json:
+            csrf_token = request.headers.get('X-CSRFToken')
+        else:
+            csrf_token = request.form.get('csrf_token')
         try:
             validate_csrf(csrf_token)
         except Exception as e:
@@ -150,7 +157,7 @@ def create_app(test_config=None):
             
             img_str, secret = generate_qr(username)
 
-            session['pub_key'] = pkey
+            session['pub_key'] = public_key
             session['secret'] = secret
             session['qr_code'] = img_str
 
@@ -168,7 +175,7 @@ def create_app(test_config=None):
         #p_data = session.get('p_register')
         #if not p_data:
         #    return redirect(url_for('index'))
-        totp_code = request.json.get('totp')
+        totp_code = request.form.get('totp')
         if verify_totp(session.get('secret'), totp_code):
             mnemonic = generate_mnemonic()
             hash_, salt = hash_seed(convert_to_seed(mnemonic))
@@ -215,7 +222,8 @@ def create_app(test_config=None):
         qr = session.get('qr_code')
         if not qr:
             return redirect(url_for('index'))
-        return render_template('register_qr.html', qr_code=qr, error=None)
+        form = TOTPForm()
+        return render_template('register_qr.html', form=form, qr_code=qr, error=None)
 
 
     @app.route('/login', methods = ['GET'])

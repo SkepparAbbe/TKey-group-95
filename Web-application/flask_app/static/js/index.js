@@ -29,6 +29,7 @@ async function HandleAuthentication(event, formID, responseGenerator, signatureU
         ContentType.JSON,
         contents.csrf_token
     );
+    console.log(challenge);
 
     if (!challenge.ok) {
         statusMsg.innerHTML = String("Error communicating with the Server");
@@ -40,6 +41,7 @@ async function HandleAuthentication(event, formID, responseGenerator, signatureU
         signatureURL,
         ContentType.URLENCODED
     );
+    console.log(signature);
 
     if (!signature.ok) {
         statusMsg.innerHTML = signature.data.error;
@@ -55,6 +57,7 @@ async function HandleAuthentication(event, formID, responseGenerator, signatureU
         contents.csrf_token
     );
 
+    console.log(response);
     if (response.ok && response.data.success) {
         if (!flagbool) {
             statusMsg.innerHTML = String("Success!");
@@ -202,7 +205,6 @@ async function requestData(message, url, contentType, csrf) {
             "Content-Type": contentType,
             ... (csrf && {'X-CSRFToken': csrf})
         };
-        console.log(headers)
 		const response = await fetch(url, {
 			method: "POST",
             headers: headers,
