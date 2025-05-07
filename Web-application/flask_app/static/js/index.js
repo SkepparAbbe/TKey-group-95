@@ -29,7 +29,6 @@ async function HandleAuthentication(event, formID, responseGenerator, signatureU
         ContentType.JSON,
         contents.csrf_token
     );
-    console.log(challenge);
 
     if (!challenge.ok) {
         statusMsg.innerHTML = String("Error communicating with the Server");
@@ -41,7 +40,6 @@ async function HandleAuthentication(event, formID, responseGenerator, signatureU
         signatureURL,
         ContentType.URLENCODED
     );
-    console.log(signature);
 
     if (!signature.ok) {
         statusMsg.innerHTML = signature.data.error;
@@ -57,7 +55,6 @@ async function HandleAuthentication(event, formID, responseGenerator, signatureU
         contents.csrf_token
     );
 
-    console.log(response);
     if (response.ok && response.data.success) {
         if (!flagbool) {
             statusMsg.innerHTML = String("Success!");
@@ -105,19 +102,33 @@ async function register(event) {
 }
 
 async function recover(event) {
-    const response = await HandleAuthentication(
-        event,
-        "recover-form",
-        recoverResponseBuilder,
-        "http://localhost:8081/registration",
-        "/recover-challenge",
-        "/challenge",
-        'stage-3-error',
-        false
-    ); 
+
+	const statusMsg = document.querySelector(".status-msg");
+    event.preventDefault();
+
+  	const formData = new FormData(event.target);
+	const contents = {};
+	formData.forEach((value, key) => {
+		contents[key] = value;
+	});
+
+	const response = await requestData(
+		contents,
+		window.location.origin + "/recover",
+		ContentType.JSON,
+		formData.get('csrf_token')
+	);
+
+	console.log(response);
+
+	if (response.ok) {
+		window.location.href = response.data.redirect_url;
+	} else {
+		statusMsg.innerHTML = "No user found";
+	}
 }
 
-function goToStage(currentStage, route) {
+/*function goToStage(currentStage, route) {
     const form = document.getElementById(`stage-${currentStage}-form`);
     let bodyData = null;
     let csrfToken = null;
@@ -139,7 +150,6 @@ function goToStage(currentStage, route) {
     .then(response => response.json())
     .then(data => {
         const errorElem = document.getElementById(`stage-${currentStage}-error`);
-        
         if (data.error) {
             if (errorElem) {
                 errorElem.innerText = data.error;
@@ -171,7 +181,7 @@ function goToStage(currentStage, route) {
             errorElem.innerText = "Something went wrong. Please try again.";
         }
     });
-}
+}*/
 
 
 function authResponseBuilder(challengeData, signatureData) {

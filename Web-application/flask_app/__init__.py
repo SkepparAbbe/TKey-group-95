@@ -62,7 +62,22 @@ def create_app(test_config=None):
     
     class RecoveryForm(FlaskForm):
         username = StringField('Username',validators=[DataRequired(message="Username is required")])
-        submit = SubmitField('Recover')
+        submit = SubmitField('Next')
+        
+    class MnemonicForm(FlaskForm):
+        word1 = StringField('Word 1',validators=[DataRequired(message="Word is required")])
+        word2 = StringField('Word 2',validators=[DataRequired(message="Word is required")])
+        word3 = StringField('Word 3',validators=[DataRequired(message="Word is required")])
+        word4 = StringField('Word 4',validators=[DataRequired(message="Word is required")])
+        word5 = StringField('Word 5',validators=[DataRequired(message="Word is required")])
+        word6 = StringField('Word 6',validators=[DataRequired(message="Word is required")])
+        word7 = StringField('Word 7',validators=[DataRequired(message="Word is required")])
+        word8 = StringField('Word 8',validators=[DataRequired(message="Word is required")])
+        word9 = StringField('Word 9',validators=[DataRequired(message="Word is required")])
+        word10 = StringField('Word 10',validators=[DataRequired(message="Word is required")])
+        word11 = StringField('Word 11',validators=[DataRequired(message="Word is required")])
+        word12 = StringField('Word 12',validators=[DataRequired(message="Word is required")])
+        submit = SubmitField('Submit')
 
     def generate_challenge():
         unique_id = uuid.uuid4().hex
@@ -83,6 +98,13 @@ def create_app(test_config=None):
         except Exception as e:
             return False
         return True
+
+    @app.after_request
+    def add_no_cache_headers(response):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
 
 
     @app.route('/', methods=['GET'])
@@ -237,6 +259,10 @@ def create_app(test_config=None):
         form = RecoveryForm()
         return render_template('recover.html', form=form)
     
+    @app.route('/recover/mnemonic', methods=['GET'])
+    def mnemonic():
+        form = MnemonicForm()
+        return render_template('mnemonic.html', form=form)
 
     @app.route('/register', methods = ['GET'])
     def register_():
@@ -263,16 +289,12 @@ def create_app(test_config=None):
         return redirect(url_for('index'))
 
 
-    @app.route('/recover-user', methods=['POST'])
+    @app.route('/recover', methods=['POST'])
     def recover_user():
         if not csrf_handler(request):
             return jsonify({'error': 'Invalid CSRF token'}), 403
-        data = request.json
-        if not data or 'username' not in data:
-            return jsonify({'error': 'Username is required'}), 400
 
-        username = data['username']
-
+        username = request.json['username']
         db = database.get_db_connection()
         cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cursor.execute('SELECT * FROM "user" WHERE username=%s', (username,))
@@ -280,13 +302,13 @@ def create_app(test_config=None):
         db.close()
 
         if not user:
-            return jsonify({'error': 'User not found'}), 404
+           return jsonify({'error': 'No User'}), 400
         
         session.clear()
         session['username'] = username
         session['mnemonic_pass'] = False
 
-        return jsonify({'success': 'User found'}), 200
+        return jsonify({'redirect_url': url_for('mnemonic')}), 200
 
 
     @app.route('/recover-mnemonic', methods=['POST'])

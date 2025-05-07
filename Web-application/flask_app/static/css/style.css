@@ -76,6 +76,10 @@ h2 {
     transition: border-color 0.2s ease;
 }
 
+.form-field input[type="submit"] {
+	background-color: #1F6FEB;
+}
+
 .form-field input:focus {
     outline: none;
     border-color: #1F6FEB;

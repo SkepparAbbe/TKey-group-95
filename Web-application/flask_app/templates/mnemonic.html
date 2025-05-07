@@ -11,13 +11,15 @@
 
 <body>
     <main>
-		<div class="module">
+        <div class="module module-enlarged">
 			<a href="/" class="back-link">&#8592;</a>
-			<h2>Enter Username</h2>
-			<form onsubmit="recover(event)">
+			<h2>Enter your 12-word Mnemonic</h2>
+			<form method="POST" action="/recover-user">
 				{{ form.hidden_tag() }}
-				<div class="form-field">
-					{{ form.username(class_="input-field", placeholder="Username", autocomplete="off", required=True) }}
+				<div class="mnemonic-grid">
+					<div class="form-field">
+						{{ form.word1(class_="input-field", autocomplete="off", required=True) }}
+					</div>
 				</div>
 				<div class="form-field">
 					{{ form.submit() }}
