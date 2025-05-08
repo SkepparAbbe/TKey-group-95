@@ -8,23 +8,28 @@ const statusMsg = document.querySelector(".status-msg");
 function extractFormData(form) {
     const formData = new FormData(form);
     const contents = {};
+    let csrf_token = null;
     formData.forEach((value, key) => {
-        contents[key] = value;
+        if (key !== 'csrf_token') {
+            contents[key] = value;
+        } else {
+            csrf_token = value;
+        }
     })
-    return contents;
+    return { contents, csrf_token };
 }
 
 async function HandleAuthentication(event, responseGenerator, signatureURL, responseUrlSuffix, url_extension, responseHandler) {
     event.preventDefault();
     const current_url = window.location.origin;
 
-    const contents = extractFormData(event.target);
+    const { contents, csrf_token } = extractFormData(event.target);
 
     const challenge = await requestData(
         { username: contents['challenge'] },
         current_url + url_extension,
         ContentType.JSON,
-        contents.csrf_token
+        csrf_token
     );
 
     if (!challenge.ok) {
@@ -49,7 +54,7 @@ async function HandleAuthentication(event, responseGenerator, signatureURL, resp
         responseDict, 
         current_url + responseUrlSuffix, 
         ContentType.JSON,
-        contents.csrf_token
+        csrf_token
     );
 
     responseHandler(response);
@@ -113,13 +118,13 @@ async function recover(event) {
 async function handleFormSubmit(event, urlSuffix) {
     event.preventDefault();
 
-    const contents = extractFormData(event.target);
+    const { contents, csrf_token } = extractFormData(event.target);
 
 	const response = await requestData(
 		contents,
 		window.location.origin + urlSuffix,
 		ContentType.JSON,
-		formData.get('csrf_token')
+		csrf_token
 	);
 
 	if (response.ok) {
@@ -135,6 +140,14 @@ async function submitUser(event) {
 
 async function submitMnemonic(event) {
     handleFormSubmit(event, "/recover/mnemonic");
+}
+
+async function submitTotp(event) {
+    handleFormSubmit(event, "/confirm-totp");
+}
+
+async function submitRegistration(event) {
+    handleFormSubmit(event, "/finalize-account")
 }
 
 function authResponseBuilder(formData, signatureData) {

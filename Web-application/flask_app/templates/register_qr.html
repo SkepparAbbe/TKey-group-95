@@ -12,27 +12,19 @@
             <a href="/" class="back-link">&#8592;</a>
             <h2 class="title">Scan the QR code with your authentication app:</h2>
             <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code" class="qr-code">
-
-            <form method="POST" action="/confirm-totp">
-                <!--<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>-->
+            <form onsubmit="submitTotp(event)">
                 {{ form.hidden_tag() }}
-                
                 <div class="form-field">
-                    <!--<label for="totp">Enter TOTP Code:</label>
-                    <input type="text" id="totp" name="totp" class="input-field" autocomplete="off" required>-->
+                    {{ form.totp.label }}
                     {{ form.totp(class_="input-field", autocomplete="off", id="totp, required") }}
                 </div>
-                
                 <div class="form-field">
-                    <!--<input type="submit" value="Verify">-->
                     {{ form.submit() }}
                 </div>
             </form>
-
-            {% if error %}
-                <p class="status-msg">{{ error }}</p>
-            {% endif %}
+            <p class="status-msg"></p>
         </div>
     </main>
+    <script src="{{url_for('static', filename='js/index.js')}}"></script>
 </body>
 </html>

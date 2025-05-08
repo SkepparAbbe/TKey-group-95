@@ -12,7 +12,7 @@ class RegisterForm(FlaskForm):
     submit = SubmitField('Register')
 
 class TOTPForm(FlaskForm):
-    totp = StringField('TOTP',validators=[DataRequired(message="TOTP is required")])
+    totp = StringField('Enter TOTP Code:',validators=[DataRequired(message="TOTP is required")])
     submit = SubmitField('Verify')
 
 class RecoveryForm(FlaskForm):
@@ -36,3 +36,6 @@ class MnemonicForm(FlaskForm):
 
 class RecoveryChallengeForm(FlaskForm):
     submit = SubmitField('Verify')
+
+class FinalizeForm(FlaskForm):
+    submit = SubmitField('Finalize Account')

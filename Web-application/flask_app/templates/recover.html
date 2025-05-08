@@ -14,7 +14,7 @@
 		<div class="module">
 			<a href="/" class="back-link">&#8592;</a>
 			<h2>Enter Username</h2>
-			<form onsubmit="fetchUser(event)">
+			<form onsubmit="submitUser(event)">
 				{{ form.hidden_tag() }}
 				<div class="form-field">
 					{{ form.username(class_="input-field", placeholder="Username", autocomplete="off", required=True) }}

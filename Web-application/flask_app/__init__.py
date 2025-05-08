@@ -50,7 +50,7 @@ def create_app(test_config=None):
     def csrf_handler(request):
         if request.is_json:
             csrf_token = request.headers.get('X-CSRFToken')
-        else:
+        else:   # most likely doesn't need the else-part
             csrf_token = request.form.get('csrf_token')
         try:
             validate_csrf(csrf_token)
@@ -152,7 +152,7 @@ def create_app(test_config=None):
     def confirm_totp():
         if not csrf_handler(request):
             return jsonify({'error': 'Invalid CSRF token'}), 403
-        totp_code = request.form.get('totp')
+        totp_code = request.json.get('totp')
         if verify_totp(session.get('secret'), totp_code):
             mnemonic = generate_mnemonic()
             hash_, salt = hash_seed(convert_to_seed(mnemonic))
@@ -161,9 +161,8 @@ def create_app(test_config=None):
             session['salt'] = salt
             session['hash'] = hash_
 
-            return redirect(url_for('show_mnemonic'))
-        else:
-            return render_template('register_qr.html', qr_code=session['qr_code'], error='Invalid TOTP code')
+            return jsonify({'redirect_url': url_for('show_mnemonic')}), 200
+        return jsonify({'error': 'Invalid TOTP code'}), 401 
 
 
     @app.route('/show-mnemonic', methods=['GET'])
@@ -173,8 +172,8 @@ def create_app(test_config=None):
             return redirect(url_for('index'))
 
         mnemonic_words = mnemonic.split()
-        
-        return render_template('register_mnemonic.html', mnemonic_words=mnemonic_words, error=None)
+        form = RecoveryChallengeForm()
+        return render_template('register_mnemonic.html', mnemonic_words=mnemonic_words, form=form)
 
 
     @app.route('/finalize-account', methods=['POST'])
@@ -191,7 +190,7 @@ def create_app(test_config=None):
         db.close()
 
         session.clear()
-        return redirect(url_for('login'))
+        return jsonify({'redirect_url': url_for('login')}), 200
 
 
     @app.route('/show-qr', methods=['GET'])
@@ -200,7 +199,7 @@ def create_app(test_config=None):
         if not qr:
             return redirect(url_for('index'))
         form = TOTPForm()
-        return render_template('register_qr.html', form=form, qr_code=qr, error=None)
+        return render_template('register_qr.html', form=form, qr_code=qr)
 
 
     @app.route('/login', methods = ['GET'])
