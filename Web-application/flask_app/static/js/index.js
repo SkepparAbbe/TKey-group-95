@@ -5,15 +5,20 @@ const ContentType = {
 
 const statusMsg = document.querySelector(".status-msg");
 
-async function HandleAuthentication(event, responseGenerator, signatureURL, responseUrlSuffix, url_extension, flagbool) {
-    event.preventDefault();
-    const current_url = window.location.origin;
-
-    const formData = new FormData(event.target);
+function extractFormData(form) {
+    const formData = new FormData(form);
     const contents = {};
     formData.forEach((value, key) => {
         contents[key] = value;
-    });
+    })
+    return contents;
+}
+
+async function HandleAuthentication(event, responseGenerator, signatureURL, responseUrlSuffix, url_extension, responseHandler) {
+    event.preventDefault();
+    const current_url = window.location.origin;
+
+    const contents = extractFormData(event.target);
 
     const challenge = await requestData(
         { username: contents['challenge'] },
@@ -47,24 +52,7 @@ async function HandleAuthentication(event, responseGenerator, signatureURL, resp
         contents.csrf_token
     );
 
-    if (response.ok && response.data.success) {
-        if (!flagbool) {
-            statusMsg.innerHTML = String("Success!");
-            statusMsg.classList.add("success-green");
-            setTimeout(() => {
-                window.location.href = current_url + "/login";
-            }, 3000);
-        }
-        if(response.data.redirect_url){
-            window.location.href = response.data.redirect_url;
-        }
-        if(response.data.qr_code){        
-            showQRCode(response.data.qr_code);
-        }
-
-    } else {
-        statusMsg.innerHTML = String(response.data.error);
-    }
+    responseHandler(response);
 }
 
 async function authenticate(event) {
@@ -74,8 +62,13 @@ async function authenticate(event) {
         "http://localhost:8081/login",
         "/verify",
         "/challenge",
-        ".status-msg",
-        true
+        (response) => {
+            if (response.ok) {
+                window.location.href = response.data.redirect_url;
+            } else {
+                statusMsg.innerHTML = String(response.data.error);
+            }
+        }
     );
 }
 
@@ -86,7 +79,13 @@ async function register(event) {
         "http://localhost:8081/registration",
         "/register",
         "/challenge",   
-        true
+        (response) => {
+            if (response.ok) {
+                window.location.href = response.data.redirect_url;
+            } else {
+                statusMsg.innerHTML = String(response.data.error);
+            }
+        }
     );
 }
 
@@ -97,29 +96,31 @@ async function recover(event) {
         "http://localhost:8081/registration",
         "/recover/challenge",
         "/challenge",
-        false
+        (response) => {
+            if (response.ok) {
+                statusMsg.innerHTML = String("Success!");
+                statusMsg.classList.add("success-green");
+                setTimeout(() => {
+                    window.location.href = response.data.redirect_url;
+                }, 3000);
+            } else {
+                statusMsg.innerHTML = String(response.data.error);
+            }
+        }
     );
 }
 
-
-
-async function fetchUser(event) {
+async function handleFormSubmit(event, urlSuffix) {
     event.preventDefault();
 
-  	const formData = new FormData(event.target);
-	const contents = {};
-	formData.forEach((value, key) => {
-		contents[key] = value;
-	});
+    const contents = extractFormData(event.target);
 
 	const response = await requestData(
 		contents,
-		window.location.origin + "/recover",
+		window.location.origin + urlSuffix,
 		ContentType.JSON,
 		formData.get('csrf_token')
 	);
-
-	console.log(response);
 
 	if (response.ok) {
 		window.location.href = response.data.redirect_url;
@@ -128,36 +129,19 @@ async function fetchUser(event) {
 	}
 }
 
+async function submitUser(event) {
+    handleFormSubmit(event, "/recover");
+}
+
 async function submitMnemonic(event) {
-    const statusMsg = document.querySelector(".status-msg");
-    event.preventDefault();
-
-  	const formData = new FormData(event.target);
-	const contents = {};
-	formData.forEach((value, key) => {
-		contents[key] = value;
-	});
-
-    const response = await requestData(
-        contents,
-        window.location.origin + "/recover/mnemonic",
-		ContentType.JSON,
-		formData.get('csrf_token')
-    )
-
-    if (response.ok) {
-		window.location.href = response.data.redirect_url;
-	} else {
-		statusMsg.innerHTML = response.data.error;
-	}
+    handleFormSubmit(event, "/recover/mnemonic");
 }
 
 function authResponseBuilder(formData, signatureData) {
-    const totp = document.getElementById("totp").value;
     return {
         username: formData.username,
-        signature: signatureData.signature,
-        totp: totp
+        totp: formData.totp,
+        signature: signatureData.signature
     };
 }
 

@@ -20,12 +20,11 @@ from .qrGen import generate_qr, verify_totp
 from .forms import *
 
 def create_app(test_config=None):
-    # Create and configure the app
+
     app = Flask(__name__, instance_relative_config=True)
     app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
     app.config['SESSION_TYPE'] = 'redis'
     app.config['SESSION_REDIS'] = Redis(host='redis', port=6379)
-    #DATABASE=os.environ.get('DATABASE_URL')
     app.config['SESSION_PERMANENT'] = False
 
     Session(app)
@@ -76,9 +75,7 @@ def create_app(test_config=None):
     def send_challenge():
         if not csrf_handler(request):
             return jsonify({'error': 'Invalid CSRF token'}), 403
-        #data = request.json
         challenge = generate_challenge()
-        #session['username'] = data['username']
         session['challenge'] = challenge
         return jsonify({
             'challenge': challenge
@@ -93,7 +90,6 @@ def create_app(test_config=None):
         signature = data['signature']
         totp = data.get('totp')
         username = data.get('username')
-        #username = session.get('username')
         challenge = session.get('challenge')
         db = database.get_db_connection()
         cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -120,10 +116,10 @@ def create_app(test_config=None):
         if not csrf_handler(request):
             return jsonify({'error': 'Invalid CSRF token'}), 403
         data = request.json
-        signature = data['signature']
-        username = session.get('username')
+        signature = data.get('signature')
+        username = data.get('username')
         challenge = session.get('challenge')
-        public_key = data['publicKey']
+        public_key = data.get('publicKey')
         if validate(challenge, signature, public_key):
             db = database.get_db_connection()
             cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -140,6 +136,7 @@ def create_app(test_config=None):
             
             img_str, secret = generate_qr(username)
 
+            session['username'] = username
             session['pub_key'] = public_key
             session['secret'] = secret
             session['qr_code'] = img_str
@@ -155,9 +152,6 @@ def create_app(test_config=None):
     def confirm_totp():
         if not csrf_handler(request):
             return jsonify({'error': 'Invalid CSRF token'}), 403
-        #p_data = session.get('p_register')
-        #if not p_data:
-        #    return redirect(url_for('index'))
         totp_code = request.form.get('totp')
         if verify_totp(session.get('secret'), totp_code):
             mnemonic = generate_mnemonic()
@@ -332,6 +326,7 @@ def create_app(test_config=None):
             session.clear()
             return jsonify({
                 'success': 'Successfully recoverered',
+                'redirect_url': url_for('login')
             }), 200
         return jsonify({'error': 'Invalid credentials'}), 401
 
