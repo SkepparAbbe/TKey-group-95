@@ -11,14 +11,13 @@ from flask import Flask
 from flask import g, render_template, redirect, url_for, request, session, jsonify
 from flask_session import Session
 from redis.client import Redis
-from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, ValidationError
 from flask_wtf.csrf import CSRFProtect, validate_csrf
-from wtforms.validators import DataRequired
 
 from .recovery import generate_mnemonic, convert_to_seed, hash_seed, verify_mnemonic
 
 from .qrGen import generate_qr, verify_totp 
+
+from .forms import *
 
 def create_app(test_config=None):
     # Create and configure the app
@@ -34,50 +33,11 @@ def create_app(test_config=None):
     # Creates csrf protection object that forms from flask-wtf needs.
     csrf = CSRFProtect(app)
 
-    if test_config is None:
-        # load the instance config, if it exists when not testing
-        app.config.from_pyfile('config.py', silent=True)
-    else:
-        # Load the test config if passed in
-        app.config.from_mapping(test_config)
-
     from . import database
     database.init_app(app)
 
     from . import auth
     app.register_blueprint(auth.bp)
-    
-    class LoginForm(FlaskForm):
-        username = StringField('Username',validators=[DataRequired(message="Username is required")])
-        totp = StringField('TOTP',validators=[DataRequired(message="TOTP is required")])
-        submit = SubmitField('Login')
-
-    class RegisterForm(FlaskForm):
-        username = StringField('Username',validators=[DataRequired(message="Username is required")])
-        submit = SubmitField('Register')
-
-    class TOTPForm(FlaskForm):
-        totp = StringField('TOTP',validators=[DataRequired(message="TOTP is required")])
-        submit = SubmitField('Verify')
-    
-    class RecoveryForm(FlaskForm):
-        username = StringField('Username',validators=[DataRequired(message="Username is required")])
-        submit = SubmitField('Next')
-        
-    class MnemonicForm(FlaskForm):
-        word1 = StringField('Word 1',validators=[DataRequired(message="Word is required")])
-        word2 = StringField('Word 2',validators=[DataRequired(message="Word is required")])
-        word3 = StringField('Word 3',validators=[DataRequired(message="Word is required")])
-        word4 = StringField('Word 4',validators=[DataRequired(message="Word is required")])
-        word5 = StringField('Word 5',validators=[DataRequired(message="Word is required")])
-        word6 = StringField('Word 6',validators=[DataRequired(message="Word is required")])
-        word7 = StringField('Word 7',validators=[DataRequired(message="Word is required")])
-        word8 = StringField('Word 8',validators=[DataRequired(message="Word is required")])
-        word9 = StringField('Word 9',validators=[DataRequired(message="Word is required")])
-        word10 = StringField('Word 10',validators=[DataRequired(message="Word is required")])
-        word11 = StringField('Word 11',validators=[DataRequired(message="Word is required")])
-        word12 = StringField('Word 12',validators=[DataRequired(message="Word is required")])
-        submit = SubmitField('Submit')
 
     def generate_challenge():
         unique_id = uuid.uuid4().hex
@@ -263,6 +223,11 @@ def create_app(test_config=None):
     def mnemonic():
         form = MnemonicForm()
         return render_template('mnemonic.html', form=form)
+    
+    @app.route('/recover/challenge', methods=['GET'])
+    def keyRecovery():
+        return 'Cringe'
+
 
     @app.route('/register', methods = ['GET'])
     def register_():
@@ -302,7 +267,7 @@ def create_app(test_config=None):
         db.close()
 
         if not user:
-           return jsonify({'error': 'No User'}), 400
+           return jsonify({'error': 'No user found'}), 400
         
         session.clear()
         session['username'] = username
@@ -311,7 +276,7 @@ def create_app(test_config=None):
         return jsonify({'redirect_url': url_for('mnemonic')}), 200
 
 
-    @app.route('/recover-mnemonic', methods=['POST'])
+    @app.route('/recover/mnemonic', methods=['POST'])
     def recover_mnemonic():
         if not csrf_handler(request):
             return jsonify({'error': 'Invalid CSRF token'}), 403
@@ -325,11 +290,14 @@ def create_app(test_config=None):
         cursor.execute('SELECT * FROM "user" WHERE username=%s', (username,))
         user = cursor.fetchone()
         db.close()
+
+        print(user)
+        print(mnemonic)
         
         if not verify_mnemonic(user['hash'], user['salt'], mnemonic):
-            return jsonify({'error': 'Wrong phrase'}), 404
+            return jsonify({'error': 'Wrong mnemonic phrase'}), 404
         session['mnemonic_pass'] = True
-        return jsonify({'success': 'Mnemonic verified'}), 200
+        return jsonify({'redirect_url': url_for('keyRecovery')}), 200
 
 
     #@app.route('/recover-challenge-generate', methods=['POST'])

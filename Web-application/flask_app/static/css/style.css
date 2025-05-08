@@ -32,11 +32,11 @@ main {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-radius: 8px; 
+    border-radius: 8px;
 }
 
 .module-enlarged {
-    height: 600px;
+    height: 640px;
     width: 500px;
 }
 
@@ -57,6 +57,7 @@ h2 {
 .form-field {
     display: flex;
     flex-direction: column;
+    justify-content: space-around;
     margin-bottom: 16px;
 }
 
@@ -78,6 +79,20 @@ h2 {
 
 .form-field input[type="submit"] {
 	background-color: #1F6FEB;
+    font-weight: 600;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.form-field input[type="submit"]:hover {
+	background-color: #1F6FEB;
+    cursor: pointer;
+}
+
+.form-field .centered-button {
+    width: 220px;
+    position: relative;
+    left: calc(50% - 110px);
 }
 
 .form-field input:focus {
@@ -226,8 +241,7 @@ h2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px 24px; /* row gap, column gap */
-    max-width: 100%;
-    padding: 0 20px;
+    width: 100%;
 }
 
 /* register_mnemonic.html */

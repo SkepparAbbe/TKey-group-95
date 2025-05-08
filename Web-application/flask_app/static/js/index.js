@@ -124,7 +124,31 @@ async function recover(event) {
 	if (response.ok) {
 		window.location.href = response.data.redirect_url;
 	} else {
-		statusMsg.innerHTML = "No user found";
+		statusMsg.innerHTML = response.data.error;
+	}
+}
+
+async function submitMnemonic(event) {
+    const statusMsg = document.querySelector(".status-msg");
+    event.preventDefault();
+
+  	const formData = new FormData(event.target);
+	const contents = {};
+	formData.forEach((value, key) => {
+		contents[key] = value;
+	});
+
+    const response = await requestData(
+        contents,
+        window.location.origin + "/recover/mnemonic",
+		ContentType.JSON,
+		formData.get('csrf_token')
+    )
+
+    if (response.ok) {
+		window.location.href = response.data.redirect_url;
+	} else {
+		statusMsg.innerHTML = response.data.error;
 	}
 }
 
