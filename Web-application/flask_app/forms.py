@@ -33,3 +33,6 @@ class MnemonicForm(FlaskForm):
     word11 = StringField('Word 11',validators=[DataRequired(message="Word is required")])
     word12 = StringField('Word 12',validators=[DataRequired(message="Word is required")])
     submit = SubmitField('Submit')
+
+class RecoveryChallengeForm(FlaskForm):
+    submit = SubmitField('Verify')

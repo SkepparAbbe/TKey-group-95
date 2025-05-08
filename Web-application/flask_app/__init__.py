@@ -76,9 +76,9 @@ def create_app(test_config=None):
     def send_challenge():
         if not csrf_handler(request):
             return jsonify({'error': 'Invalid CSRF token'}), 403
-        data = request.json
+        #data = request.json
         challenge = generate_challenge()
-        session['username'] = data['username']
+        #session['username'] = data['username']
         session['challenge'] = challenge
         return jsonify({
             'challenge': challenge
@@ -92,7 +92,8 @@ def create_app(test_config=None):
         data = request.json
         signature = data['signature']
         totp = data.get('totp')
-        username = session.get('username')
+        username = data.get('username')
+        #username = session.get('username')
         challenge = session.get('challenge')
         db = database.get_db_connection()
         cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -222,11 +223,12 @@ def create_app(test_config=None):
     @app.route('/recover/mnemonic', methods=['GET'])
     def mnemonic():
         form = MnemonicForm()
-        return render_template('mnemonic.html', form=form)
+        return render_template('recover_mnemonic.html', form=form)
     
     @app.route('/recover/challenge', methods=['GET'])
     def keyRecovery():
-        return 'Cringe'
+        form = RecoveryChallengeForm()
+        return render_template('recover_challenge.html', form=form)
 
 
     @app.route('/register', methods = ['GET'])
@@ -290,41 +292,14 @@ def create_app(test_config=None):
         cursor.execute('SELECT * FROM "user" WHERE username=%s', (username,))
         user = cursor.fetchone()
         db.close()
-
-        print(user)
-        print(mnemonic)
         
         if not verify_mnemonic(user['hash'], user['salt'], mnemonic):
             return jsonify({'error': 'Wrong mnemonic phrase'}), 404
         session['mnemonic_pass'] = True
         return jsonify({'redirect_url': url_for('keyRecovery')}), 200
+    
 
-
-    #@app.route('/recover-challenge-generate', methods=['POST'])
-    #def recover_challenge_generate():
-    #    if not csrf_handler(request):
-    #        jsonify({'error': 'Invalid CSRF token'}), 400
-    #
-    #    #get from previous session username
-    #    p_recover = session.get('p_recover')
-    #    if not p_recover:
-    #        return jsonify({'error': 'Session expired'}), 400
-    #
-    #    if not p_recover['pass']:
-    #        return jsonify({'error': 'Mnemonic not verified'}), 400
-    #
-    #    session_id = str(uuid.uuid4())
-    #    challenge = generate_challenge()
-    #    session[session_id] = {
-    #        'username': p_recover['username'],
-    #        'challenge': challenge
-    #    }
-    #    return jsonify({
-    #        'session_id': session_id,
-    #        'challenge': challenge
-    #    }), 200
-
-    @app.route('/recover-challenge', methods=['POST'])
+    @app.route('/recover/challenge', methods=['POST'])
     def recover_challenge():
         if not csrf_handler(request):
             return jsonify({'error': 'Invalid CSRF token'}), 403

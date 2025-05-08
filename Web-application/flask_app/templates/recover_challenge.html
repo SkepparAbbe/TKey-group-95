@@ -13,14 +13,12 @@
     <main>
 		<div class="module">
 			<a href="/" class="back-link">&#8592;</a>
-			<h2>Enter Username</h2>
-			<form onsubmit="fetchUser(event)">
+			<h2>Insert New Device</h2>
+            <p class="title title-small">Please insert your new TKey device you want to use.</p>
+			<form onsubmit="recover(event)">
 				{{ form.hidden_tag() }}
 				<div class="form-field">
-					{{ form.username(class_="input-field", placeholder="Username", autocomplete="off", required=True) }}
-				</div>
-				<div class="form-field">
-					{{ form.submit() }}
+					{{ form.submit(class_="centered-button") }}
 				</div>
 			</form>
 			<p class="status-msg"></p>
