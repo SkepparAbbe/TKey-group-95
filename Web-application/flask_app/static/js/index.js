@@ -65,7 +65,7 @@ async function authenticate(event) {
         event,
         authResponseBuilder,
         "http://localhost:8081/login",
-        "/verify",
+        "/login",
         "/challenge",
         (response) => {
             if (response.ok) {
@@ -99,7 +99,7 @@ async function recover(event) {
         event,
         registerResponseBuilder,
         "http://localhost:8081/registration",
-        "/recover/challenge",
+        "/recover/verify",
         "/challenge",
         (response) => {
             if (response.ok) {
@@ -143,11 +143,11 @@ async function submitMnemonic(event) {
 }
 
 async function submitTotp(event) {
-    handleFormSubmit(event, "/confirm-totp");
+    handleFormSubmit(event, "/register/twofactor");
 }
 
 async function submitRegistration(event) {
-    handleFormSubmit(event, "/finalize-account")
+    handleFormSubmit(event, "/register/finalize")
 }
 
 function authResponseBuilder(formData, signatureData) {

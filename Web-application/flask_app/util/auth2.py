@@ -4,7 +4,7 @@ import psycopg2.extras
 
 from .database import get_db, get_db_connection
 
-bp = Blueprint('auth', __name__, url_prefix='/auth')
+bp = Blueprint('auth2', __name__, url_prefix='/auth2')
 
 @bp.before_app_request
 def load_logged_in_user():
@@ -29,7 +29,7 @@ def login_required(view):
     @functools.wraps(view)
     def wrapped_view(**kwargs):
         if g.user is None:
-            return redirect(url_for('login'))
+            return redirect(url_for('auth.login'))
         
         return view(**kwargs) 
     
