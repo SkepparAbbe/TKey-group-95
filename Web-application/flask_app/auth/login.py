@@ -15,8 +15,6 @@ def login():
         form = LoginForm()
         return render_template('login.html', form=form)
     
-    #if not csrf_handler(request):
-    #    return jsonify({'error': 'Invalid CSRF token'}), 403
     data = request.json
     signature = data['signature']
     totp = data.get('totp')
