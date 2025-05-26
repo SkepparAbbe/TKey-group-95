@@ -1,6 +1,7 @@
 Flask==2.3.3
 Flask-WTF==1.2.2
 Flask-Session[redis]==0.5.0
+Flask-Limiter[redis]==3.5.1
 redis==4.0.0
 setuptools
 cryptography==41.0.5

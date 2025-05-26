@@ -7,6 +7,7 @@ import time
 import psycopg2.extras
 from flask import Flask
 from flask import g, render_template, redirect, url_for, request, session, jsonify
+from flask_limiter.errors import RateLimitExceeded
 from flask_session import Session
 from redis.client import Redis
 from flask_wtf.csrf import CSRFProtect, validate_csrf
@@ -16,16 +17,25 @@ from .forms import *
 from .auth import auth_bp
 from .util import auth2
 from .util import database
+from .util.rate_limiter import limiter
 
 def create_app():
 
+    redis_client = Redis(host='redis', port=6379)
     app = Flask(__name__, instance_relative_config=True)
     app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
     app.config['SESSION_TYPE'] = 'redis'
-    app.config['SESSION_REDIS'] = Redis(host='redis', port=6379)
+    app.config['SESSION_REDIS'] = redis_client
     app.config['SESSION_PERMANENT'] = False
+    app.config['RATELIMIT_ENABLED'] = True
 
     Session(app)
+
+    limiter.init_app(app)
+
+    @app.errorhandler(RateLimitExceeded)
+    def ratelimit_handler(e):
+        return jsonify({'error': 'Rate limit reached'}), 429
 
     csrf = CSRFProtect(app)
 

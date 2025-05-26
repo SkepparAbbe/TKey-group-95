@@ -7,7 +7,7 @@ from ..util.verify import verify
 from ..util.recovery import verify_mnemonic
 from ..forms import RecoveryForm, MnemonicForm, RecoveryChallengeForm
 from ..util import database
-
+from ..util.rate_limiter import limiter, ip_and_account
 
 @auth_bp.route('/recover', methods=['GET', 'POST'])
 def recover():
@@ -32,6 +32,7 @@ def recover():
 	return jsonify({'redirect_url': url_for('auth.mnemonic')}), 200
 
 @auth_bp.route('/recover/mnemonic', methods=['GET', 'POST'])
+@limiter.limit("5 per minute", key_func=ip_and_account, methods=["POST"])
 def mnemonic():
 	if request.method == 'GET':
 		mnemonic_token = session.get('mnemonic_pass', None)

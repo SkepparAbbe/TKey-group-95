@@ -7,9 +7,10 @@ from ..util.verify import verify
 from ..util.qrGen import verify_totp
 from ..forms import LoginForm
 from ..util import database
-
+from ..util.rate_limiter import limiter, ip_and_account
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute", key_func=ip_and_account, methods=["POST"])
 def login():
     if request.method == 'GET':
         form = LoginForm()
