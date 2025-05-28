@@ -3,31 +3,33 @@ const ContentType = {
     JSON: "application/json"
 };
 
-//const statusMsg = document.querySelector(".status-msg");
+const statusMsg = document.querySelector(".status-msg");
 
-async function HandleAuthentication(event, formID, responseGenerator, signatureURL, responseUrlSuffix, url_extension, statusMsg, flagbool) {
+function extractFormData(form) {
+    const formData = new FormData(form);
+    const contents = {};
+    let csrf_token = null;
+    formData.forEach((value, key) => {
+        if (key !== 'csrf_token') {
+            contents[key] = value;
+        } else {
+            csrf_token = value;
+        }
+    })
+    return { contents, csrf_token };
+}
+
+async function HandleAuthentication(event, responseGenerator, signatureURL, responseUrlSuffix, url_extension, responseHandler) {
     event.preventDefault();
     const current_url = window.location.origin;
 
-    if (flagbool==true) {
-        statusMsg = document.querySelector(statusMsg);
-
-    } else {
-        statusMsg = document.getElementById(statusMsg);
-
-    }
-
-    const formData = new FormData(document.getElementById(formID));
-    const contents = {};
-    formData.forEach((value, key) => {
-        contents[key] = value;
-    });
+    const { contents, csrf_token } = extractFormData(event.target);
 
     const challenge = await requestData(
-        contents,
+        { username: contents['challenge'] },
         current_url + url_extension,
         ContentType.JSON,
-        contents.csrf_token
+        csrf_token
     );
 
     if (!challenge.ok) {
@@ -46,151 +48,119 @@ async function HandleAuthentication(event, formID, responseGenerator, signatureU
         return;
     }
 
-    const responseDict = responseGenerator(challenge.data, signature.data);
+    const responseDict = responseGenerator(contents, signature.data);
 
     const response = await requestData(
         responseDict, 
         current_url + responseUrlSuffix, 
         ContentType.JSON,
-        contents.csrf_token
+        csrf_token
     );
 
-    if (response.ok && response.data.success) {
-        if (!flagbool) {
-            statusMsg.innerHTML = String("Success!");
-            statusMsg.classList.add("success-green");
-            setTimeout(() => {
-                window.location.href = current_url + "/login";
-            }, 3000);
-        }
-        if(response.data.redirect_url){
-            window.location.href = response.data.redirect_url;
-        }
-        if(response.data.qr_code){        
-            showQRCode(response.data.qr_code);
-        }
-
-    } else {
-        statusMsg.innerHTML = String(response.data.error);
-    }
+    responseHandler(response);
 }
 
 async function authenticate(event) {
     HandleAuthentication(
         event,
-        "login-form",
         authResponseBuilder,
         "http://localhost:8081/login",
-        "/verify",
+        "/login",
         "/challenge",
-        ".status-msg",
-        true
+        (response) => {
+            if (response.ok) {
+                window.location.href = response.data.redirect_url;
+            } else {
+                statusMsg.innerHTML = String(response.data.error);
+            }
+        }
     );
 }
 
 async function register(event) {
     HandleAuthentication(
         event,
-        "registration-form",
         registerResponseBuilder,
         "http://localhost:8081/registration",
         "/register",
-        "/challenge",
-        ".status-msg",
-        true
+        "/challenge",   
+        (response) => {
+            if (response.ok) {
+                window.location.href = response.data.redirect_url;
+            } else {
+                statusMsg.innerHTML = String(response.data.error);
+            }
+        }
     );
 }
 
 async function recover(event) {
-    const response = await HandleAuthentication(
+    HandleAuthentication(
         event,
-        "recover-form",
-        recoverResponseBuilder,
+        registerResponseBuilder,
         "http://localhost:8081/registration",
-        "/recover-challenge",
-        "/recover-challenge-generate",
-        'stage-3-error',
-        false
-    ); 
-}
-
-function goToStage(currentStage, route) {
-    const form = document.getElementById(`stage-${currentStage}-form`);
-    let bodyData = null;
-    let csrfToken = null;
-
-    if (form) {
-        const formData = new FormData(form);
-        bodyData = JSON.stringify(Object.fromEntries(formData.entries()));
-        csrfToken = formData.get('csrf_token');
-    }
-
-    fetch(route, {
-        method: 'POST',
-        body: bodyData,
-        headers: {
-            'Content-Type': 'application/json',
-            ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {})
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        const errorElem = document.getElementById(`stage-${currentStage}-error`);
-        
-        if (data.error) {
-            if (errorElem) {
-                errorElem.innerText = data.error;
+        "/recover/verify",
+        "/challenge",
+        (response) => {
+            if (response.ok) {
+                statusMsg.innerHTML = String("Success!");
+                statusMsg.classList.add("success-green");
+                setTimeout(() => {
+                    window.location.href = response.data.redirect_url;
+                }, 3000);
+            } else {
+                statusMsg.innerHTML = String(response.data.error);
             }
-            return;
         }
-
-        // Hide current stage
-        const currentStageElem = document.getElementById(`stage-${currentStage}`);
-        if (currentStageElem) {
-            currentStageElem.classList.remove('active');
-        }
-
-        // Show next stage
-        const nextStageElem = document.getElementById(`stage-${currentStage + 1}`);
-        if (nextStageElem) {
-            nextStageElem.classList.add('active');
-        }
-
-        // Clear previous errors
-        if (errorElem) {
-            errorElem.innerText = '';
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        const errorElem = document.getElementById(`stage-${currentStage}-error`);
-        if (errorElem) {
-            errorElem.innerText = "Something went wrong. Please try again.";
-        }
-    });
+    );
 }
 
+async function handleFormSubmit(event, urlSuffix) {
+    event.preventDefault();
 
-function authResponseBuilder(challengeData, signatureData) {
-    const totp = document.getElementById("totp").value;
+    const { contents, csrf_token } = extractFormData(event.target);
+
+	const response = await requestData(
+		contents,
+		window.location.origin + urlSuffix,
+		ContentType.JSON,
+		csrf_token
+	);
+
+	if (response.ok) {
+		window.location.href = response.data.redirect_url;
+	} else {
+		statusMsg.innerHTML = response.data.error;
+	}
+}
+
+async function submitUser(event) {
+    handleFormSubmit(event, "/recover");
+}
+
+async function submitMnemonic(event) {
+    handleFormSubmit(event, "/recover/mnemonic");
+}
+
+async function submitTotp(event) {
+    handleFormSubmit(event, "/register/twofactor");
+}
+
+async function submitRegistration(event) {
+    handleFormSubmit(event, "/register/finalize")
+}
+
+function authResponseBuilder(formData, signatureData) {
     return {
-        session_id: challengeData.session_id,
-        signature: signatureData.signature,
-        totp: totp
+        username: formData.username,
+        totp: formData.totp,
+        signature: signatureData.signature
     };
 }
 
-function registerResponseBuilder(challengeData, signatureData) {
+function registerResponseBuilder(formData, signatureData) {
     return {
-        session_id: challengeData.session_id,
-        signature: signatureData.signature,
-        publicKey: signatureData.publicKey
-    };
-}
-
-function recoverResponseBuilder(challengeData,signatureData){
-    return {
-        session_id: challengeData.session_id,
+        username: formData.username,
         signature: signatureData.signature,
         publicKey: signatureData.publicKey
     };
@@ -202,7 +172,6 @@ async function requestData(message, url, contentType, csrf) {
             "Content-Type": contentType,
             ... (csrf && {'X-CSRFToken': csrf})
         };
-        console.log(headers)
 		const response = await fetch(url, {
 			method: "POST",
             headers: headers,
@@ -211,7 +180,6 @@ async function requestData(message, url, contentType, csrf) {
         const data = await response.json();
         return { ok: response.ok, data: data };
     } catch (e) {
-        // Assume error in proxy server
-        return { ok: false, data: { error: "Error communicating with the TKey" } };
+        return { ok: false, data: { error: "Communication error" } };
     }
 }

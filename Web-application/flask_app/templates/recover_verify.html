@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T-95</title>
+
+    <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}">
+</head>
+
+<body>
+    <main>
+		<div class="module">
+			<a href="/" class="back-link">&#8592;</a>
+			<h2>Insert New Device</h2>
+            <p class="title title-small">Please insert your new TKey device you want to use.</p>
+			<form onsubmit="recover(event)">
+				{{ form.hidden_tag() }}
+				<div class="form-field">
+					{{ form.submit(class_="centered-button") }}
+				</div>
+			</form>
+			<p class="status-msg"></p>
+		</div>
+    </main>
+	<script src="{{url_for('static', filename='js/index.js')}}"></script>
+</body>
+
+</html>

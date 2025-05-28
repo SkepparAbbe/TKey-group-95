@@ -3,19 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mnemonic Phrase</title>
+    <title>T-95</title>
     <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}">
 </head>
 <body>
     <main>
         <div class="module module-enlarged">
             <h2 class="title">Your Mnemonic Phrase</h2>
-            <p class="title-small">Please save this mnemonic phrase securely. It is required to recover your account.</p>
-            
-            {% if error %}
-                <div class="status-msg">{{ error }}</div>
-            {% endif %}
-
+            <p class="title-small">Make sure to save this mnemonic phrase securely. It is required to recover your account.</p>
             <div class="mnemonic-box">
                 <div class="mnemonic-phrase">
                     <div class="mnemonic-row">
@@ -36,13 +31,14 @@
                     </div>
                 </div>
             </div>
-
-            <form action="{{ url_for('finalize_account') }}" method="POST">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="mnemonic" value="{{ mnemonic }}">
-                <button type="submit" class="button button-wizard">Finalize Account</button>
+            <form onsubmit="submitRegistration(event)">
+                {{ form.hidden_tag() }}
+                <div class="form-field">
+					{{ form.submit() }}
+				</div>
             </form>
         </div>
     </main>
+    <script src="{{url_for('static', filename='js/index.js')}}"></script>
 </body>
 </html>
