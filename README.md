@@ -1,7 +1,5 @@
 # Passwordless Authentication System Using TKey 
 
-![System Architecture](systemarchitecture.png) 
-
 A secure, passwordless authentication system using TKey hardware device.
 
 ## Table of Contents
